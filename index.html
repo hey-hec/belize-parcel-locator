@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Belize Parcel Locator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
+<style>
+  :root{
+    --paper: #eef0ea;
+    --paper-raised: #f7f8f4;
+    --ink: #1f3a52;
+    --ink-soft: #5c7286;
+    --line-blue: #7fa8c9;
+    --line-blue-soft: rgba(127,168,201,0.35);
+    --rust: #b5432f;
+    --rust-dark: #8f3123;
+    --ok: #3f7a52;
+    --warn: #a6772b;
+    --err: #a6372b;
+    --radius: 3px;
+    --serif-title: "Barlow Condensed", sans-serif;
+    --sans: "IBM Plex Sans", sans-serif;
+    --mono: "IBM Plex Mono", monospace;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html, body{
+    margin: 0;
+    padding: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+  }
+
+  body{
+    background-image:
+      repeating-linear-gradient(0deg, var(--line-blue-soft) 0px, transparent 1px, transparent 28px, var(--line-blue-soft) 29px),
+      repeating-linear-gradient(90deg, var(--line-blue-soft) 0px, transparent 1px, transparent 28px, var(--line-blue-soft) 29px);
+    background-size: 29px 29px;
+    background-color: var(--paper);
+    min-height: 100vh;
+  }
+
+  /* ── Layout ── */
+  .wrap{
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 14px 14px 48px;
+  }
+  @media (min-width: 480px){ .wrap{ padding: 22px 20px 56px; } }
+  @media (min-width: 700px){ .wrap{ padding: 28px 24px 64px; } }
+
+  /* ── Unofficial disclaimer banner ── */
+  .disclaimer-banner{
+    background: #fffbe6;
+    border: 1px solid #d4a017;
+    border-left: 4px solid #d4a017;
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    margin-bottom: 14px;
+    font-size: 13px;
+    color: #5a4000;
+    line-height: 1.5;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .disclaimer-banner svg{
+    flex-shrink: 0;
+    margin-top: 1px;
+    color: #b8860b;
+  }
+
+  /* ── Title block ── */
+  header.titleblock{
+    border: 2px solid var(--ink);
+    border-radius: var(--radius);
+    background: var(--paper-raised);
+    padding: 16px 16px;
+    margin-bottom: 16px;
+    position: relative;
+  }
+  @media (min-width: 480px){ header.titleblock{ padding: 18px 20px; } }
+  header.titleblock::before{
+    content: "";
+    position: absolute;
+    inset: 5px;
+    border: 1px solid var(--line-blue);
+    border-radius: 2px;
+    pointer-events: none;
+  }
+  h1{
+    font-family: var(--serif-title);
+    font-weight: 700;
+    font-size: clamp(26px, 7vw, 40px);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin: 0 0 6px 0;
+    line-height: 1;
+  }
+  .subtitle{
+    font-size: clamp(13px, 3.5vw, 14.5px);
+    color: var(--ink-soft);
+    line-height: 1.45;
+  }
+  .assume-row{
+    margin-top: 12px;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+
+  button:focus-visible, .dropzone:focus-visible{
+    outline: 2px solid var(--rust);
+    outline-offset: 2px;
+  }
+
+  /* ── Corner marks ── */
+  .corner-mark{
+    position: absolute;
+    width: 16px; height: 16px;
+    pointer-events: none;
+  }
+  .corner-mark svg{ width: 100%; height: 100%; display: block; }
+  .corner-mark.tl{ top: -8px; left: -8px; }
+  .corner-mark.tr{ top: -8px; right: -8px; }
+  .corner-mark.bl{ bottom: -8px; left: -8px; }
+  .corner-mark.br{ bottom: -8px; right: -8px; }
+
+  /* ── Dropzone ── */
+  .dropzone{
+    position: relative;
+    border: 2px dashed var(--line-blue);
+    border-radius: var(--radius);
+    background: var(--paper-raised);
+    padding: 36px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .15s ease, background-color .15s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  @media (min-width: 480px){ .dropzone{ padding: 46px 20px; } }
+  .dropzone:hover, .dropzone.dragover{
+    border-color: var(--rust);
+    background: #fbf3f1;
+  }
+  .dropzone .dz-icon{
+    width: 38px; height: 38px;
+    margin: 0 auto 12px;
+    color: var(--ink-soft);
+  }
+  @media (min-width: 480px){ .dropzone .dz-icon{ width: 42px; height: 42px; } }
+  .dropzone .dz-title{
+    font-weight: 600;
+    font-size: clamp(14px, 4vw, 16px);
+    margin-bottom: 4px;
+  }
+  .dropzone .dz-sub{
+    font-size: clamp(12px, 3.2vw, 13px);
+    color: var(--ink-soft);
+  }
+  input[type=file]{ display: none; }
+
+  /* ── Cards ── */
+  .card{
+    border: 1px solid var(--line-blue);
+    border-radius: var(--radius);
+    background: var(--paper-raised);
+    padding: 14px 14px;
+    margin-top: 14px;
+    position: relative;
+  }
+  @media (min-width: 480px){ .card{ padding: 18px 20px; margin-top: 16px; } }
+  .card h2{
+    font-family: var(--serif-title);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: clamp(16px, 4.5vw, 18px);
+    font-weight: 700;
+    margin: 0 0 12px 0;
+    color: var(--ink);
+  }
+
+  /* ── Preview + scan ── */
+  .preview-shell{
+    position: relative;
+    overflow: hidden;
+    border-radius: 2px;
+    border: 1px solid var(--ink);
+    max-height: 280px;
+    display: flex;
+    justify-content: center;
+    background: #111;
+  }
+  @media (min-width: 600px){ .preview-shell{ max-height: 320px; } }
+  .preview-shell img{
+    display: block;
+    max-width: 100%;
+    max-height: 280px;
+    object-fit: contain;
+    opacity: 0.92;
+  }
+  @media (min-width: 600px){ .preview-shell img{ max-height: 320px; } }
+  .scanline{
+    position: absolute;
+    left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #9fd6ff, transparent);
+    box-shadow: 0 0 12px 2px rgba(159,214,255,0.8);
+    animation: scan 2.4s ease-in-out infinite;
+  }
+  @keyframes scan{
+    0%   { top: 4%; }
+    50%  { top: 94%; }
+    100% { top: 4%; }
+  }
+  .scan-label{
+    margin-top: 12px;
+    font-family: var(--mono);
+    font-size: clamp(11px, 3vw, 13px);
+    color: var(--ink-soft);
+    text-align: center;
+    letter-spacing: 0.03em;
+  }
+  .scan-label .blink{ animation: blink 1.1s steps(1) infinite; }
+  @keyframes blink{ 50%{ opacity: 0; } }
+
+  /* ── Readout grid ── */
+  .readout-grid{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  @media (max-width: 380px){
+    .readout-grid{ grid-template-columns: 1fr; }
+  }
+  .readout-box{
+    border: 1px solid var(--ink);
+    border-radius: 2px;
+    background: #16283a;
+    color: #d8f0ff;
+    padding: 10px 12px;
+    position: relative;
+  }
+  @media (min-width: 480px){ .readout-box{ padding: 12px 14px; } }
+  .readout-box .rl{
+    font-family: var(--sans);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #8bb6d6;
+    margin-bottom: 4px;
+  }
+  .readout-box .rv{
+    font-family: var(--mono);
+    font-size: clamp(16px, 4.5vw, 20px);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    word-break: break-all;
+  }
+  .readout-box .rv small{
+    font-size: 11px;
+    color: #8bb6d6;
+  }
+
+  /* ── Badge ── */
+  .badge{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 4px 9px;
+    border-radius: 999px;
+    border: 1px solid currentColor;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .badge.high{ color: var(--ok); }
+  .badge.medium{ color: var(--warn); }
+  .badge.low{ color: var(--err); }
+  .badge .dot{ width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+  .notes{
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin-top: 10px;
+    line-height: 1.5;
+    border-left: 2px solid var(--line-blue);
+    padding-left: 10px;
+  }
+
+  /* ── Map ── */
+  #map{
+    width: 100%;
+    height: 260px;
+    border-radius: 2px;
+    border: 1px solid var(--ink);
+    margin-top: 14px;
+    display: block;
+  }
+  @media (min-width: 480px){ #map{ height: 300px; } }
+  @media (min-width: 700px){ #map{ height: 340px; } }
+
+  /* ── Action buttons ── */
+  .actions{
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 14px;
+  }
+  a.btn, button.btn{
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: clamp(13px, 3.5vw, 13.5px);
+    text-decoration: none;
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    border: 1px solid var(--ink);
+    background: var(--paper);
+    color: var(--ink);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1 1 auto;
+    justify-content: center;
+    min-height: 44px; /* touch target */
+    text-align: center;
+  }
+  @media (min-width: 480px){
+    a.btn, button.btn{ flex: 0 1 auto; }
+  }
+  a.btn:hover, button.btn:hover{ background: #e2e5db; }
+  button.btn.primary{
+    background: var(--rust);
+    border-color: var(--rust-dark);
+    color: #fdf3f1;
+  }
+  button.btn.primary:hover{ background: var(--rust-dark); }
+
+  /* ── Error box ── */
+  .error-box{
+    border: 1px solid var(--err);
+    background: #fbf0ee;
+    color: var(--err);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    font-size: 13.5px;
+    line-height: 1.5;
+  }
+  .error-box strong{
+    display: block;
+    margin-bottom: 4px;
+    font-family: var(--serif-title);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 15px;
+  }
+
+  /* ── Fine print ── */
+  .fineprint{
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-top: 20px;
+    line-height: 1.6;
+    border-top: 1px dashed var(--line-blue);
+    padding-top: 12px;
+  }
+
+  /* ── Footer ── */
+  footer.site-footer{
+    margin-top: 32px;
+    border-top: 1px solid var(--line-blue);
+    padding-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-start;
+  }
+  @media (min-width: 540px){
+    footer.site-footer{
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+    }
+  }
+  .footer-credit{
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+  .footer-credit strong{
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .footer-credit a{
+    color: var(--rust);
+    text-decoration: none;
+  }
+  .footer-credit a:hover{ text-decoration: underline; }
+  .footer-unofficial{
+    font-size: 11px;
+    font-family: var(--mono);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #8a6000;
+    background: #fffbe6;
+    border: 1px solid #d4a017;
+    border-radius: 999px;
+    padding: 3px 10px;
+    white-space: nowrap;
+  }
+
+  .hidden{ display: none !important; }
+
+  @media (prefers-reduced-motion: reduce){
+    .scanline{ animation: none; top: 50%; }
+    .scan-label .blink{ animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Unofficial disclaimer -->
+  <div class="disclaimer-banner">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+    <span>This is an <strong>unofficial, privately maintained tool</strong> and is not affiliated with, endorsed by, or connected to the Government of Belize, the Lands &amp; Survey Department, or any official registry. Results are estimates only — always verify against official parcel records before making any legal or financial decision.</span>
+  </div>
+
+  <header class="titleblock">
+    <h1>Belize Parcel Locator</h1>
+    <div class="subtitle">Upload a photo of a cadastral survey plan. If its grid&nbsp;coordinates (the pair of numbers ending in <strong>N</strong> and <strong>E</strong>, usually beside blue reference lines) are visible, this reads them and drops a pin on the map.</div>
+    <div class="assume-row">
+      Uses Belize's standard metric survey grid (UTM Zone 16N). The entire country fits within this single zone — no configuration needed.
+    </div>
+  </header>
+
+  <div id="dropzoneWrap">
+    <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Upload a photo of a survey plan">
+      <div class="corner-mark tl"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" style="color: var(--line-blue)"><rect x="4" y="4" width="8" height="8" transform="rotate(45 8 8)"/><line x1="8" y1="0" x2="8" y2="16"/><line x1="0" y1="8" x2="16" y2="8"/></svg></div>
+      <div class="corner-mark tr"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" style="color: var(--line-blue)"><rect x="4" y="4" width="8" height="8" transform="rotate(45 8 8)"/><line x1="8" y1="0" x2="8" y2="16"/><line x1="0" y1="8" x2="16" y2="8"/></svg></div>
+      <div class="corner-mark bl"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" style="color: var(--line-blue)"><rect x="4" y="4" width="8" height="8" transform="rotate(45 8 8)"/><line x1="8" y1="0" x2="8" y2="16"/><line x1="0" y1="8" x2="16" y2="8"/></svg></div>
+      <div class="corner-mark br"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" style="color: var(--line-blue)"><rect x="4" y="4" width="8" height="8" transform="rotate(45 8 8)"/><line x1="8" y1="0" x2="8" y2="16"/><line x1="0" y1="8" x2="16" y2="8"/></svg></div>
+      <svg class="dz-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+        <path d="M4 16.5V19a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2.5"/>
+        <path d="M12 15V4"/>
+        <path d="M7.5 8.5 12 4l4.5 4.5"/>
+      </svg>
+      <div class="dz-title">Tap to choose a photo</div>
+      <div class="dz-sub">JPG or PNG &middot; grid-coordinate labels (N and E) must be visible</div>
+      <input type="file" id="fileInput" accept="image/*" capture="environment">
+    </div>
+  </div>
+
+  <div id="resultsArea"></div>
+
+  <div class="fineprint">
+    Coordinate reading is done by an AI model — it can occasionally misread numbers that are blurry, cropped, or at an unusual angle. Assumes UTM Zone 16N (WGS84). If the result falls outside Belize the tool will warn you, which usually means the plan uses a different grid system.
+  </div>
+
+  <footer class="site-footer">
+    <div class="footer-credit">
+      Built by <strong>Blue Star Digital BZ</strong> &nbsp;&middot;&nbsp;
+      <a href="mailto:contact@bluestardigital.bz">contact@bluestardigital.bz</a>
+    </div>
+    <span class="footer-unofficial">Unofficial &amp; privately maintained</span>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  var dropzone = document.getElementById('dropzone');
+  var fileInput = document.getElementById('fileInput');
+  var resultsArea = document.getElementById('resultsArea');
+
+  dropzone.addEventListener('click', function(){ fileInput.click(); });
+  dropzone.addEventListener('keydown', function(e){
+    if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); fileInput.click(); }
+  });
+  ['dragenter','dragover'].forEach(function(evt){
+    dropzone.addEventListener(evt, function(e){ e.preventDefault(); dropzone.classList.add('dragover'); });
+  });
+  ['dragleave','drop'].forEach(function(evt){
+    dropzone.addEventListener(evt, function(e){ e.preventDefault(); dropzone.classList.remove('dragover'); });
+  });
+  dropzone.addEventListener('drop', function(e){
+    var f = e.dataTransfer.files && e.dataTransfer.files[0];
+    if(f) handleFile(f);
+  });
+  fileInput.addEventListener('change', function(e){
+    var f = e.target.files && e.target.files[0];
+    if(f) handleFile(f);
+  });
+
+  function readImageFile(file){
+    // Returns { dataUrl, base64, mediaType }
+    // dataUrl is safe as <img src> on any host; blob: URLs can be blocked by CSP.
+    return new Promise(function(resolve, reject){
+      var r = new FileReader();
+      r.onload = function(){
+        var dataUrl = r.result;
+        var base64 = dataUrl.split(',')[1];
+        resolve({ dataUrl: dataUrl, base64: base64, mediaType: file.type });
+      };
+      r.onerror = function(){ reject(new Error('Could not read file')); };
+      r.readAsDataURL(file);
+    });
+  }
+
+  function handleFile(file){
+    if(!file.type.startsWith('image/')){
+      renderError('That file doesn\'t look like an image. Choose a JPG or PNG photo of the survey plan.');
+      return;
+    }
+    readImageFile(file).then(function(img){
+      renderScanning(img.dataUrl);
+      return analyzeImage(img.base64, img.mediaType).then(function(parsed){
+        handleParsedResult(parsed, img.dataUrl);
+      });
+    }).catch(function(err){
+      console.error(err);
+      renderError('Something went wrong reading this image (' + err.message + '). Try again, or try a different photo.');
+    });
+  }
+
+  var PROMPT = [
+    "This is a photo of a Belize cadastral / land survey plan.",
+    "Somewhere on the sheet there are usually two grid reference lines (often drawn in blue), each labeled with a coordinate value ending in the letter N (northing) or E (easting) — for example \"1934 100 N\" and \"364 200 E\". These represent a position on the national survey grid.",
+    "Do NOT confuse these with: lot side lengths (e.g. \"30.475\"), bearings/angles (e.g. \"105°\", \"15° 46' 20\"\"), or the lot area in square yards (e.g. \"777.78 S.Y.\"). Those are not grid coordinates.",
+    "Find the northing and easting grid labels if they appear anywhere in the image, even if partially cropped, rotated, or handwritten-style.",
+    "Respond with ONLY raw JSON and nothing else — no markdown code fences, no commentary before or after. Match this exact shape:",
+    "{\"found\": boolean, \"easting\": number_or_null, \"northing\": number_or_null, \"raw_easting_label\": string_or_null, \"raw_northing_label\": string_or_null, \"confidence\": \"high\"|\"medium\"|\"low\", \"notes\": string}",
+    "Strip spaces/commas from the numbers before returning them as plain numbers (e.g. \"364 200\" becomes 364200).",
+    "Set \"found\" to true only if BOTH a northing and an easting value are clearly legible. If only a partial or ambiguous label is visible, set found to false, put whatever you could read in the raw label fields, and explain what's missing in notes."
+  ].join(' ');
+
+  function analyzeImage(base64, mediaType){
+    // Calls our Netlify serverless function, which holds the API key server-side.
+    // This keeps the key out of the browser and avoids CORS errors.
+    return fetch('/netlify/functions/analyze', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ base64: base64, mediaType: mediaType })
+    }).then(function(res){
+      if(!res.ok) throw new Error('Request failed (' + res.status + ')');
+      return res.json();
+    }).then(function(data){
+      var textBlock = (data.content || []).filter(function(b){ return b.type === 'text'; }).map(function(b){ return b.text; }).join('\n');
+      var cleaned = textBlock.replace(/```json/gi, '').replace(/```/g, '').trim();
+      var jsonStart = cleaned.indexOf('{');
+      var jsonEnd = cleaned.lastIndexOf('}');
+      if(jsonStart === -1 || jsonEnd === -1) throw new Error('Could not parse a response');
+      return JSON.parse(cleaned.slice(jsonStart, jsonEnd + 1));
+    });
+  }
+
+  function renderScanning(imgUrl){
+    resultsArea.innerHTML =
+      '<div class="card">' +
+        '<h2>Reading grid coordinates</h2>' +
+        '<div class="preview-shell"><img src="' + imgUrl + '" alt="Uploaded survey plan"><div class="scanline"></div></div>' +
+        '<div class="scan-label">SCANNING FOR N / E GRID LABELS<span class="blink">_</span></div>' +
+      '</div>';
+    resultsArea.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+
+  function renderError(message){
+    resultsArea.innerHTML =
+      '<div class="card">' +
+        '<div class="error-box"><strong>Could not locate coordinates</strong>' + escapeHtml(message) + '</div>' +
+        '<div class="actions"><button class="btn primary" onclick="document.getElementById(\'fileInput\').click()">Try another photo</button></div>' +
+      '</div>';
+  }
+
+  function handleParsedResult(parsed, imgUrl){
+    if(!parsed.found || parsed.easting == null || parsed.northing == null){
+      var msg = parsed.notes || 'No clear northing/easting labels were found on this plan.';
+      resultsArea.innerHTML =
+        '<div class="card">' +
+          '<h2>No coordinates found</h2>' +
+          '<div class="preview-shell"><img src="' + imgUrl + '" alt="Uploaded survey plan"></div>' +
+          '<div class="error-box" style="margin-top:14px;"><strong>Could not locate coordinates</strong>' + escapeHtml(msg) +
+            (parsed.raw_easting_label || parsed.raw_northing_label ? '<br><br>Partial read — easting: ' + escapeHtml(parsed.raw_easting_label || '—') + ', northing: ' + escapeHtml(parsed.raw_northing_label || '—') : '') +
+          '</div>' +
+          '<div class="actions"><button class="btn primary" onclick="document.getElementById(\'fileInput\').click()">Try another photo</button></div>' +
+        '</div>';
+      return;
+    }
+
+    var proj = '+proj=utm +zone=16 +datum=WGS84 +units=m +no_defs';
+    var lonlat;
+    try{
+      lonlat = proj4(proj, 'WGS84', [parsed.easting, parsed.northing]);
+    }catch(e){
+      renderError('Found coordinates but could not convert them (' + e.message + ').');
+      return;
+    }
+    var lon = lonlat[0], lat = lonlat[1];
+
+    // Belize bounding box sanity check
+    var inBelize = lat > 15.5 && lat < 18.7 && lon > -89.5 && lon < -87.0;
+
+    var confidence = (parsed.confidence || 'medium').toLowerCase();
+    if(['high','medium','low'].indexOf(confidence) === -1) confidence = 'medium';
+    var mapsUrl = 'https://www.google.com/maps?q=' + lat.toFixed(6) + ',' + lon.toFixed(6) + '&t=k&z=17';
+
+    var outOfBoundsWarning = inBelize ? '' :
+      '<div class="error-box" style="margin-bottom:14px;"><strong>This doesn\'t look like it\'s in Belize</strong>' +
+      'The converted position falls outside Belize\'s borders, which usually means this plan isn\'t using the UTM Zone 16N grid this tool assumes — possibly the older colonial "Belize Grid" instead. Treat the numbers below with caution.</div>';
+
+    resultsArea.innerHTML =
+      '<div class="card">' +
+        '<h2>Grid reading</h2>' +
+        '<div class="preview-shell"><img src="' + imgUrl + '" alt="Uploaded survey plan"></div>' +
+        '<div class="readout-grid" style="margin-top:14px;">' +
+          '<div class="readout-box"><div class="rl">Easting</div><div class="rv">' + parsed.easting.toLocaleString() + ' <small>m E</small></div></div>' +
+          '<div class="readout-box"><div class="rl">Northing</div><div class="rv">' + parsed.northing.toLocaleString() + ' <small>m N</small></div></div>' +
+        '</div>' +
+        '<span class="badge ' + confidence + '"><span class="dot"></span>' + confidence + ' confidence</span>' +
+        (parsed.notes ? '<div class="notes">' + escapeHtml(parsed.notes) + '</div>' : '') +
+      '</div>' +
+      '<div class="card">' +
+        '<h2>Converted position</h2>' +
+        outOfBoundsWarning +
+        '<div class="readout-grid">' +
+          '<div class="readout-box"><div class="rl">Latitude</div><div class="rv">' + lat.toFixed(6) + '</div></div>' +
+          '<div class="readout-box"><div class="rl">Longitude</div><div class="rv">' + lon.toFixed(6) + '</div></div>' +
+        '</div>' +
+        '<iframe id="map" ' +
+          'src="https://www.openstreetmap.org/export/embed.html' +
+          '?bbox=' + (lon-0.002).toFixed(6) + '%2C' + (lat-0.002).toFixed(6) + '%2C' + (lon+0.002).toFixed(6) + '%2C' + (lat+0.002).toFixed(6) +
+          '&layer=mapnik&marker=' + lat.toFixed(6) + '%2C' + lon.toFixed(6) +
+          '" ' +
+          'loading="lazy" referrerpolicy="no-referrer-when-downgrade" ' +
+          'title="Property location map"></iframe>' +
+        '<div class="actions">' +
+          '<a class="btn primary" href="' + mapsUrl + '" target="_blank" rel="noopener">Open in Google Maps</a>' +
+          '<button class="btn" onclick="document.getElementById(\'fileInput\').click()">Try another photo</button>' +
+        '</div>' +
+      '</div>';
+
+    fileInput.value = '';
+  }
+
+  function escapeHtml(str){
+    var d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+})();
+</script>
+</body>
+</html>
