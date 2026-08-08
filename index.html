@@ -434,8 +434,8 @@
   }
   .counter-strip .counter-num{
     font-family: var(--mono);
-    font-size: 22px;
-    font-weight: 600;
+    font-size: 15px;
+    font-weight: 500;
     color: var(--ok);
     line-height: 1;
     min-width: 2ch;
@@ -690,22 +690,25 @@
     incrementCount();
   }
 
-  // ── Success counter ──
+  // ── Shared success counter (backed by Netlify Blobs via /netlify/functions/counter) ──
   var countEl = document.getElementById('successCount');
-  function loadCount(){
-    try{ return parseInt(localStorage.getItem('parcel_success_count') || '0', 10) || 0; }
-    catch(e){ return 0; }
+
+  function fetchCount(){
+    fetch('/netlify/functions/counter')
+      .then(function(r){ return r.json(); })
+      .then(function(d){ if(countEl && d.count != null) countEl.textContent = d.count; })
+      .catch(function(){}); // fail silently — counter is non-critical
   }
-  function saveCount(n){
-    try{ localStorage.setItem('parcel_success_count', String(n)); }catch(e){}
-  }
+
   function incrementCount(){
-    var n = loadCount() + 1;
-    saveCount(n);
-    if(countEl) countEl.textContent = n;
+    fetch('/netlify/functions/counter', { method: 'POST' })
+      .then(function(r){ return r.json(); })
+      .then(function(d){ if(countEl && d.count != null) countEl.textContent = d.count; })
+      .catch(function(){});
   }
-  // Initialise display
-  if(countEl) countEl.textContent = loadCount();
+
+  // Load current count on page load
+  fetchCount();
 
   function escapeHtml(str){
     var d = document.createElement('div');
