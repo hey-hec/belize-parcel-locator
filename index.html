@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Belize Parcel Locator</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%231f3a52'/><text x='16' y='23' font-size='20' text-anchor='middle' fill='%237fa8c9'>📍</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
@@ -418,6 +419,29 @@
     white-space: nowrap;
   }
 
+  /* ── Success counter ── */
+  .counter-strip{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--paper-raised);
+    border: 1px solid var(--line-blue);
+    border-radius: var(--radius);
+    padding: 9px 14px;
+    margin-bottom: 14px;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+  .counter-strip .counter-num{
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--ok);
+    line-height: 1;
+    min-width: 2ch;
+  }
+  .counter-strip svg{ flex-shrink: 0; color: var(--ok); }
+
   .hidden{ display: none !important; }
 
   @media (prefers-reduced-motion: reduce){
@@ -443,9 +467,21 @@
     <h1>Belize Parcel Locator</h1>
     <div class="subtitle">Upload a photo of a cadastral survey plan. If its grid&nbsp;coordinates (the pair of numbers ending in <strong>N</strong> and <strong>E</strong>, usually beside blue reference lines) are visible, this reads them and drops a pin on the map.</div>
     <div class="assume-row">
-      Uses Belize's standard metric survey grid (UTM Zone 16N). The entire country fits within this single zone — no configuration needed.
+      <strong style="display:block; margin-bottom:6px; color:var(--ink); font-size:13px; text-transform:uppercase; letter-spacing:0.06em;">How to use</strong>
+      <ol style="margin:0; padding-left:18px; display:flex; flex-direction:column; gap:5px;">
+        <li>Find your survey plan document — the original or a clear photocopy.</li>
+        <li>Look for two blue reference lines crossing the plan, each labeled with a long number ending in <strong>N</strong> (northing) or <strong>E</strong> (easting) — e.g. <em>1934 100 N</em> and <em>364 200 E</em>.</li>
+        <li>Take a well-lit, straight-on photo making sure both N and E labels are fully visible in frame.</li>
+        <li>Tap the upload area below and select your photo. The tool will read the coordinates and place a pin on the map.</li>
+      </ol>
     </div>
   </header>
+
+  <div class="counter-strip">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+    <span class="counter-num" id="successCount">0</span>
+    <span>parcels successfully located</span>
+  </div>
 
   <div id="dropzoneWrap">
     <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Upload a photo of a survey plan">
@@ -460,7 +496,7 @@
       </svg>
       <div class="dz-title">Tap to choose a photo</div>
       <div class="dz-sub">JPG or PNG &middot; grid-coordinate labels (N and E) must be visible</div>
-      <input type="file" id="fileInput" accept="image/*" capture="environment">
+      <input type="file" id="fileInput" accept="image/*">
     </div>
   </div>
 
@@ -641,7 +677,7 @@
           'src="https://www.google.com/maps/embed/v1/place' +
           '?key=AIzaSyAUFzAnBcqaGtzLWfjnPqV4ffGK7gruQWw' +
           '&q=' + lat.toFixed(6) + ',' + lon.toFixed(6) +
-          '&zoom=17&maptype=satellite" ' +
+          '&zoom=14&maptype=satellite" ' +
           'allowfullscreen loading="lazy" referrerpolicy="strict-origin-when-cross-origin" ' +
           'title="Property location on Google Maps"></iframe>' +
         '<div class="actions">' +
@@ -651,7 +687,25 @@
       '</div>';
 
     fileInput.value = '';
+    incrementCount();
   }
+
+  // ── Success counter ──
+  var countEl = document.getElementById('successCount');
+  function loadCount(){
+    try{ return parseInt(localStorage.getItem('parcel_success_count') || '0', 10) || 0; }
+    catch(e){ return 0; }
+  }
+  function saveCount(n){
+    try{ localStorage.setItem('parcel_success_count', String(n)); }catch(e){}
+  }
+  function incrementCount(){
+    var n = loadCount() + 1;
+    saveCount(n);
+    if(countEl) countEl.textContent = n;
+  }
+  // Initialise display
+  if(countEl) countEl.textContent = loadCount();
 
   function escapeHtml(str){
     var d = document.createElement('div');
