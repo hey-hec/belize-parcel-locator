@@ -418,76 +418,6 @@
     white-space: nowrap;
   }
 
-
-  /* ── Password gate ── */
-  #gate{
-    position: fixed;
-    inset: 0;
-    background: var(--paper);
-    background-image:
-      repeating-linear-gradient(0deg, var(--line-blue-soft) 0px, transparent 1px, transparent 28px, var(--line-blue-soft) 29px),
-      repeating-linear-gradient(90deg, var(--line-blue-soft) 0px, transparent 1px, transparent 28px, var(--line-blue-soft) 29px);
-    background-size: 29px 29px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    padding: 20px;
-  }
-  #gate.unlocked{ display: none; }
-  .gate-box{
-    background: var(--paper-raised);
-    border: 2px solid var(--ink);
-    border-radius: var(--radius);
-    padding: 28px 24px;
-    max-width: 360px;
-    width: 100%;
-    text-align: center;
-    position: relative;
-  }
-  .gate-box::before{
-    content:"";
-    position:absolute;
-    inset:5px;
-    border:1px solid var(--line-blue);
-    border-radius:2px;
-    pointer-events:none;
-  }
-  .gate-box h2{
-    font-family: var(--serif-title);
-    font-size: 26px;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    margin: 0 0 6px 0;
-  }
-  .gate-box p{
-    font-size: 13.5px;
-    color: var(--ink-soft);
-    margin: 0 0 20px 0;
-    line-height: 1.5;
-  }
-  .gate-input{
-    width: 100%;
-    font-family: var(--mono);
-    font-size: 15px;
-    padding: 10px 12px;
-    border: 1px solid var(--ink);
-    border-radius: var(--radius);
-    background: var(--paper);
-    color: var(--ink);
-    margin-bottom: 12px;
-    text-align: center;
-    letter-spacing: 0.08em;
-  }
-  .gate-input:focus{ outline: 2px solid var(--rust); outline-offset: 2px; }
-  .gate-error{
-    font-size: 13px;
-    color: var(--err);
-    margin-top: 8px;
-    min-height: 18px;
-  }
-
   .hidden{ display: none !important; }
 
   @media (prefers-reduced-motion: reduce){
@@ -497,17 +427,6 @@
 </style>
 </head>
 <body>
-
-<!-- ── Access gate + API config ── -->
-<div id="gate">
-  <div class="gate-box">
-    <h2>Belize Parcel Locator</h2>
-    <p>This is a private tool. Enter the access password to continue.</p>
-    <input class="gate-input" type="password" id="gateInput" placeholder="Password" autocomplete="current-password">
-    <button class="btn primary" id="gateBtn" style="width:100%;justify-content:center;">Enter</button>
-    <div class="gate-error" id="gateError"></div>
-  </div>
-</div>
 
 <div class="wrap">
 
@@ -629,27 +548,12 @@
   ].join(' ');
 
   function analyzeImage(base64, mediaType){
-    return fetch('https://api.anthropic.com/v1/messages', {
+    return fetch('/netlify/functions/analyze', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': window.__PARCEL_KEY__,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 1000,
-        messages: [{
-          role: 'user',
-          content: [
-            { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
-            { type: 'text', text: PROMPT }
-          ]
-        }]
-      })
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ base64: base64, mediaType: mediaType })
     }).then(function(res){
-      if(!res.ok) throw new Error('API request failed (' + res.status + ')');
+      if(!res.ok) throw new Error('Request failed (' + res.status + ')');
       return res.json();
     }).then(function(data){
       var textBlock = (data.content || []).filter(function(b){ return b.type === 'text'; }).map(function(b){ return b.text; }).join('\n');
@@ -755,34 +659,6 @@
     return d.innerHTML;
   }
 
-  // ── Password gate ──
-  // Passwords map to Anthropic API keys.
-  // Add as many password:key pairs as you need.
-  var PASSWORDS = {
-    'belizeparcel2026': 'YOUR_ANTHROPIC_API_KEY_HERE'
-  };
-
-  var gate = document.getElementById('gate');
-  var gateInput = document.getElementById('gateInput');
-  var gateBtn = document.getElementById('gateBtn');
-  var gateError = document.getElementById('gateError');
-
-  function tryUnlock(){
-    var pw = gateInput.value.trim();
-    if(PASSWORDS[pw]){
-      window.__PARCEL_KEY__ = PASSWORDS[pw];
-      gate.classList.add('unlocked');
-      gateInput.value = '';
-    } else {
-      gateError.textContent = 'Incorrect password. Try again.';
-      gateInput.select();
-    }
-  }
-
-  gateBtn.addEventListener('click', tryUnlock);
-  gateInput.addEventListener('keydown', function(e){
-    if(e.key === 'Enter') tryUnlock();
-  });
 })();
 </script>
 </body>
