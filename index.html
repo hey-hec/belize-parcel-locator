@@ -321,18 +321,70 @@ input[type=file]{ display: none; }
    PANEL FOOTER
 ════════════════════════════════ */
 .panel-footer{
-  padding: 11px 20px;
-  border-top: 1px solid var(--warn-border);
-  background: var(--warn-bg);
+  padding: 9px 16px;
+  border-top: 1px solid var(--border);
+  background: var(--panel-bg2);
   flex-shrink: 0;
 }
-.panel-footer-text{
-  font-size: 11px;
-  color: var(--warn-text);
-  line-height: 1.55;
+.footer-btn-row{
   display: flex;
   gap: 8px;
-  align-items: flex-start;
+}
+.footer-info-btn{
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 999px;
+  padding: 4px 10px;
+  cursor: pointer;
+  border: 1px solid;
+  transition: background .12s, border-color .12s, color .12s;
+}
+/* Disclaimer button — yellow */
+#disclaimerBtn{
+  color: var(--warn-text);
+  background: var(--warn-bg);
+  border-color: var(--warn-border);
+}
+#disclaimerBtn:hover,
+#disclaimerBtn.active{
+  background: #fef3c7;
+  border-color: #b8860b;
+  color: #3d2800;
+}
+/* Accuracy button — blue */
+#accuracyBtn{
+  color: #1e40af;
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+#accuracyBtn:hover,
+#accuracyBtn.active{
+  background: #dbeafe;
+  border-color: #3b82f6;
+  color: #1e3a8a;
+}
+.footer-tooltip{
+  font-size: 11px;
+  border-radius: var(--radius-sm);
+  padding: 9px 11px;
+  margin-top: 8px;
+  line-height: 1.55;
+  border: 1px solid;
+}
+.footer-tooltip.hidden{ display: none; }
+#disclaimerTip{
+  color: var(--warn-text);
+  background: var(--warn-bg);
+  border-color: var(--warn-border);
+}
+#accuracyTip{
+  color: #1e3a8a;
+  background: #eff6ff;
+  border-color: #bfdbfe;
 }
 
 /* ════════════════════════════════
@@ -586,7 +638,7 @@ input[type=file]{ display: none; }
     <span>parcels located</span>
   </div>
   <div class="topbar-right">
-    <span class="topbar-unofficial">Unofficial · privately maintained</span>
+    <span class="topbar-unofficial">Unofficial · Privately Maintained</span>
     <div class="topbar-divider"></div>
     <div class="topbar-credit">Built by <a href="mailto:contact@bluestardigital.bz">Blue Star Digital BZ</a></div>
   </div>
@@ -594,80 +646,11 @@ input[type=file]{ display: none; }
 
 <!-- ══ MAP BACKGROUND ══ -->
 <div id="mapBg">
-<svg id="staticMap" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 900" preserveAspectRatio="xMidYMid slice" style="width:100%;height:100%;display:block;transition:opacity 0.4s ease;">
-  <rect width="1400" height="900" fill="#c8dce8"/>
-  <g stroke="#cad5de" stroke-width="0.7" opacity="0.7">
-    <line x1="66.7" y1="900.0" x2="66.7" y2="0.0"/>
-    <line x1="200.0" y1="900.0" x2="200.0" y2="0.0"/>
-    <line x1="333.3" y1="900.0" x2="333.3" y2="0.0"/>
-    <line x1="466.7" y1="900.0" x2="466.7" y2="0.0"/>
-    <line x1="600.0" y1="900.0" x2="600.0" y2="0.0"/>
-    <line x1="733.3" y1="900.0" x2="733.3" y2="0.0"/>
-    <line x1="866.7" y1="900.0" x2="866.7" y2="0.0"/>
-    <line x1="1000.0" y1="900.0" x2="1000.0" y2="0.0"/>
-    <line x1="1133.3" y1="900.0" x2="1133.3" y2="0.0"/>
-    <line x1="1266.7" y1="900.0" x2="1266.7" y2="0.0"/>
-    <line x1="0.0" y1="826.7" x2="1400.0" y2="826.7"/>
-    <line x1="0.0" y1="734.8" x2="1400.0" y2="734.8"/>
-    <line x1="0.0" y1="642.4" x2="1400.0" y2="642.4"/>
-    <line x1="0.0" y1="549.5" x2="1400.0" y2="549.5"/>
-    <line x1="0.0" y1="456.1" x2="1400.0" y2="456.1"/>
-    <line x1="0.0" y1="362.2" x2="1400.0" y2="362.2"/>
-    <line x1="0.0" y1="267.8" x2="1400.0" y2="267.8"/>
-    <line x1="0.0" y1="172.7" x2="1400.0" y2="172.7"/>
-    <line x1="0.0" y1="77.0" x2="1400.0" y2="77.0"/>
-  </g>
-  <path d="M 864.0 115.4 L 892.0 130.7 L 901.3 200.4 L 856.0 298.1 L 809.3 345.3 L 782.7 379.2 L 756.0 406.4 L 720.0 423.3 L 733.3 440.2 L 693.3 456.1 L 580.0 473.9 L 569.3 651.6 L 457.3 674.7 L 386.7 650.7 L 302.7 633.1 L 174.7 658.1 L 169.3 620.1 L 145.3 549.5 L 124.0 497.3 L 0.0 423.3 L 0.0 0.0 L 800.0 0.0 L 800.0 115.4 L 864.0 115.4 Z" fill="#dde5ec" stroke="#b0bfcc" stroke-width="1.2" stroke-linejoin="round"/>
-  <path d="M 580.0 473.9 L 693.3 456.1 L 733.3 642.4 L 725.3 661.8 L 704.0 704.3 L 581.3 776.2 L 553.3 806.5 L 522.7 793.7 L 484.0 821.2 L 458.7 850.6 L 373.3 842.3 L 297.3 833.1 L 234.7 810.2 L 173.3 734.8 L 169.3 620.1 L 174.7 658.1 L 302.7 633.1 L 386.7 650.7 L 457.3 674.7 L 569.3 651.6 L 580.0 473.9 Z" fill="#dde5ec" stroke="#b0bfcc" stroke-width="1.2" stroke-linejoin="round"/>
-  <path d="M 704.0 704.3 L 733.3 642.4 L 725.3 661.8 L 704.0 704.3 L 770.7 782.6 L 858.7 828.6 L 1000.0 822.1 L 1066.7 819.4 L 1202.7 760.5 L 1256.0 735.7 L 1334.7 732.9 L 1256.0 799.2 L 1204.0 850.6 L 1126.7 884.4 L 1045.3 895.4 L 897.3 890.9 L 773.3 870.7 L 668.0 840.5 L 581.3 776.2 L 704.0 704.3 Z" fill="#dde5ec" stroke="#b0bfcc" stroke-width="1.2" stroke-linejoin="round"/>
-  <path d="M 458.7 850.6 L 484.0 821.2 L 522.7 793.7 L 553.3 806.5 L 581.3 776.2 L 668.0 840.5 L 773.3 870.7 L 761.3 881.7 L 668.0 900.9 L 553.3 850.6 L 484.0 832.2 L 458.7 850.6 Z" fill="#dde5ec" stroke="#b0bfcc" stroke-width="1.2" stroke-linejoin="round"/>
-  <path d="M 1334.7 732.9 L 1256.0 735.7 L 1202.7 760.5 L 1066.7 819.4 L 1000.0 822.1 L 858.7 828.6 L 770.7 782.6 L 704.0 704.3 L 668.0 840.5 L 773.3 870.7 L 897.3 890.9 L 1045.3 895.4 L 1126.7 884.4 L 1204.0 850.6 L 1256.0 799.2 L 1334.7 732.9 Z" fill="#dde5ec" stroke="#b0bfcc" stroke-width="1.2" stroke-linejoin="round"/>
-  <path d="M 720.0 423.3 L 733.3 440.2 L 734.7 457.1 L 754.7 458.0 L 780.0 457.1 L 796.0 444.0 L 806.7 435.5 L 808.0 410.2 L 805.3 386.7 L 798.7 358.5 L 798.7 306.6 L 809.3 267.8 L 810.7 227.0 L 806.7 125.0 L 733.3 125.0 L 693.3 411.1 L 720.0 423.3 Z" fill="#ccd9e4" stroke="#b0bfcc" stroke-width="1.2" stroke-linejoin="round"/>
-  <path d="M 586.7 540.2 L 626.7 532.7 L 666.7 529.0 L 686.7 523.4 L 706.7 516.9 L 717.3 504.7" fill="none" stroke="#a8c8dc" stroke-width="1.5" stroke-linecap="round"/>
-  <path d="M 586.7 482.3 L 626.7 488.9 L 673.3 493.5 L 693.3 482.3 L 709.3 473.0" fill="none" stroke="#a8c8dc" stroke-width="1.2" stroke-linecap="round"/>
-  <path d="M 580.0 473.9 L 626.7 467.4 L 666.7 460.8 L 720.0 456.1" fill="none" stroke="#a8c8dc" stroke-width="2.0" stroke-linecap="round"/>
-  <path d="M 666.7 577.4 L 686.7 563.5 L 713.3 530.9" fill="none" stroke="#a8c8dc" stroke-width="1.0" stroke-linecap="round"/>
-  <text x="1000.0" y="343.4" fill="#9ab8cc" font-size="13" font-family="Inter,system-ui,sans-serif" font-style="italic" text-anchor="middle">Caribbean Sea</text>
-  <text x="400.0" y="596.0" fill="#8099ae" font-size="9" font-family="Inter,system-ui,sans-serif" font-weight="500" letter-spacing="0.1em" text-anchor="middle">GUATEMALA</text>
-  <text x="973.3" y="780.8" fill="#8099ae" font-size="9" font-family="Inter,system-ui,sans-serif" font-weight="500" letter-spacing="0.1em" text-anchor="middle">HONDURAS</text>
-  <text x="573.3" y="843.2" fill="#8099ae" font-size="9" font-family="Inter,system-ui,sans-serif" font-weight="500" letter-spacing="0.1em" text-anchor="middle">EL SALVADOR</text>
-  <text x="266.7" y="474.8" fill="#8099ae" font-size="9" font-family="Inter,system-ui,sans-serif" font-weight="500" letter-spacing="0.1em" text-anchor="middle">MEXICO</text>
-  <text x="1133.3" y="863.4" fill="#8099ae" font-size="9" font-family="Inter,system-ui,sans-serif" font-weight="500" letter-spacing="0.1em" text-anchor="middle">NICARAGUA</text>
-  <text x="633.3" y="544.8" fill="#6a8fa8" font-size="10.5" font-family="Inter,system-ui,sans-serif" font-weight="600" letter-spacing="0.14em">BELIZE</text>
-  <circle cx="709.3" cy="502.9" r="8" fill="#16a34a" opacity="0.15"/>
-  <circle cx="709.3" cy="502.9" r="4.5" fill="#16a34a"/>
-  <text x="718.3" y="506.9" fill="#16a34a" font-size="11" font-family="Inter,system-ui,sans-serif" font-weight="700">Belize City</text>
-  <circle cx="632.0" cy="526.2" r="3" fill="#607080" opacity="0.7"/>
-  <text x="638.0" y="529.7" fill="#607080" font-size="9.5" font-family="Inter,system-ui,sans-serif">Belmopan</text>
-  <circle cx="702.7" cy="552.3" r="3" fill="#607080" opacity="0.7"/>
-  <text x="708.7" y="555.8" fill="#607080" font-size="9.5" font-family="Inter,system-ui,sans-serif">Dangriga</text>
-  <circle cx="684.0" cy="633.1" r="3" fill="#607080" opacity="0.7"/>
-  <text x="690.0" y="636.6" fill="#607080" font-size="9.5" font-family="Inter,system-ui,sans-serif">Punta Gorda</text>
-  <circle cx="660.0" cy="446.8" r="3" fill="#607080" opacity="0.7"/>
-  <text x="666.0" y="450.3" fill="#607080" font-size="9.5" font-family="Inter,system-ui,sans-serif">Orange Walk</text>
-  <circle cx="681.3" cy="418.6" r="3" fill="#607080" opacity="0.7"/>
-  <text x="687.3" y="422.1" fill="#607080" font-size="9.5" font-family="Inter,system-ui,sans-serif">Corozal</text>
-  <circle cx="397.3" cy="767.9" r="3" fill="#607080" opacity="0.7"/>
-  <text x="403.3" y="771.4" fill="#607080" font-size="9.5" font-family="Inter,system-ui,sans-serif">Guatemala City</text>
-  <circle cx="840.0" cy="819.4" r="3" fill="#607080" opacity="0.7"/>
-  <text x="846.0" y="822.9" fill="#607080" font-size="9.5" font-family="Inter,system-ui,sans-serif">Tegucigalpa</text>
-  <circle cx="569.3" cy="854.2" r="3" fill="#607080" opacity="0.7"/>
-  <text x="575.3" y="857.7" fill="#607080" font-size="9.5" font-family="Inter,system-ui,sans-serif">San Salvador</text>
-  <text x="5" y="830.7" fill="#8099ae" font-size="8.5" font-family="IBM Plex Mono,monospace" opacity="0.65">14°N</text>
-  <text x="5" y="738.8" fill="#8099ae" font-size="8.5" font-family="IBM Plex Mono,monospace" opacity="0.65">15°N</text>
-  <text x="5" y="646.4" fill="#8099ae" font-size="8.5" font-family="IBM Plex Mono,monospace" opacity="0.65">16°N</text>
-  <text x="5" y="553.5" fill="#8099ae" font-size="8.5" font-family="IBM Plex Mono,monospace" opacity="0.65">17°N</text>
-  <text x="5" y="460.1" fill="#8099ae" font-size="8.5" font-family="IBM Plex Mono,monospace" opacity="0.65">18°N</text>
-  <text x="5" y="366.2" fill="#8099ae" font-size="8.5" font-family="IBM Plex Mono,monospace" opacity="0.65">19°N</text>
-  <text x="5" y="271.8" fill="#8099ae" font-size="8.5" font-family="IBM Plex Mono,monospace" opacity="0.65">20°N</text>
-  <text x="5" y="176.7" fill="#8099ae" font-size="8.5" font-family="IBM Plex Mono,monospace" opacity="0.65">21°N</text>
-  <text x="5" y="81.0" fill="#8099ae" font-size="8.5" font-family="IBM Plex Mono,monospace" opacity="0.65">22°N</text>
-  <text x="192.0" y="895" fill="#8099ae" font-size="8.5" font-family="IBM Plex Mono,monospace" opacity="0.65">-92°</text>
-  <text x="458.7" y="895" fill="#8099ae" font-size="8.5" font-family="IBM Plex Mono,monospace" opacity="0.65">-90°</text>
-  <text x="725.3" y="895" fill="#8099ae" font-size="8.5" font-family="IBM Plex Mono,monospace" opacity="0.65">-88°</text>
-  <text x="992.0" y="895" fill="#8099ae" font-size="8.5" font-family="IBM Plex Mono,monospace" opacity="0.65">-86°</text>
-  <text x="1258.7" y="895" fill="#8099ae" font-size="8.5" font-family="IBM Plex Mono,monospace" opacity="0.65">-84°</text>
-</svg>
+<picture id="staticMap" style="width:100%;height:100%;display:block;opacity:1;transition:opacity 0.4s ease;">
+    <source srcset="map-bg.avif" type="image/avif">
+    <source srcset="map-bg.webp" type="image/webp">
+    <img src="map-bg.png" alt="Map of Belize and Central America" style="width:100%;height:100%;object-fit:cover;object-position:center;display:block;">
+  </picture>
 
   <iframe id="liveMap" allowfullscreen loading="lazy"
     referrerpolicy="strict-origin-when-cross-origin"
@@ -716,7 +699,7 @@ input[type=file]{ display: none; }
       </div>
       <div class="instructions-step">
         <div class="step-num">4</div>
-        <div class="step-text">Tap the upload area below and select your photo. The tool will read the coordinates and place a pin on the map.</div>
+        <div class="step-text">Tap the upload area above and select your photo. The tool will read the coordinates and place a pin on the map.</div>
       </div>
     </div>
 
@@ -724,19 +707,26 @@ input[type=file]{ display: none; }
     <div id="resultsArea"></div>
 
     <!-- Fine print -->
-    <div class="fineprint">
-      Coordinate reading is done by an AI model and can occasionally misread numbers that are blurry, cropped, or at an unusual angle. If the converted position falls outside Belize the tool will warn you, which usually means the plan uses a different grid system.
-    </div>
+
 
   </div>
 
   <div class="panel-footer">
-    <div class="panel-footer-text">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#b8860b;flex-shrink:0;margin-top:1px">
-        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-        <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-      </svg>
-      <span>This is an <strong>unofficial, privately maintained tool</strong> — not affiliated with, endorsed by, or connected to the Government of Belize, the Lands &amp; Survey Department, or any official registry. Always verify against official parcel records before any legal or financial decision.</span>
+    <div class="footer-btn-row">
+      <button class="footer-info-btn" id="disclaimerBtn" aria-expanded="false">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Disclaimer
+      </button>
+      <button class="footer-info-btn" id="accuracyBtn" aria-expanded="false">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        About Accuracy
+      </button>
+    </div>
+    <div class="footer-tooltip hidden" id="disclaimerTip">
+      This is an <strong>unofficial, privately maintained tool</strong> — not affiliated with, endorsed by, or connected to the Government of Belize, the Lands &amp; Survey Department, or any official registry. Always verify against official parcel records before any legal or financial decision.
+    </div>
+    <div class="footer-tooltip hidden" id="accuracyTip">
+      Coordinate reading is done by an AI model and can occasionally misread numbers that are blurry, cropped, or at an unusual angle. If the converted position falls outside Belize the tool will warn you, which usually means the plan uses a different grid system.
     </div>
   </div>
 </aside>
@@ -964,6 +954,46 @@ input[type=file]{ display: none; }
   function escapeHtml(str){
     var d = document.createElement('div'); d.textContent = str; return d.innerHTML;
   }
+
+  // ── Footer tooltip toggles ──
+  function closeAllFooterTips(){
+    ['disclaimerTip','accuracyTip'].forEach(function(id){
+      var t = document.getElementById(id);
+      if(t) t.classList.add('hidden');
+    });
+    ['disclaimerBtn','accuracyBtn'].forEach(function(id){
+      var b = document.getElementById(id);
+      if(b){ b.classList.remove('active'); b.setAttribute('aria-expanded','false'); }
+    });
+  }
+
+  function setupFooterBtn(btnId, tipId){
+    var btn = document.getElementById(btnId);
+    var tip = document.getElementById(tipId);
+    if(!btn || !tip) return;
+
+    btn.addEventListener('click', function(){
+      var isOpen = !tip.classList.contains('hidden');
+      closeAllFooterTips();
+      if(!isOpen){
+        tip.classList.remove('hidden');
+        btn.classList.add('active');
+        btn.setAttribute('aria-expanded','true');
+      }
+    });
+  }
+
+  setupFooterBtn('disclaimerBtn','disclaimerTip');
+  setupFooterBtn('accuracyBtn','accuracyTip');
+
+  // Close tooltips when clicking outside the footer
+  document.addEventListener('click', function(e){
+    var footer = document.querySelector('.panel-footer');
+    if(footer && !footer.contains(e.target)){
+      closeAllFooterTips();
+    }
+  });
+
 })();
 </script>
 </body>
