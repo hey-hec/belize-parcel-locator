@@ -613,6 +613,159 @@ input[type=file]{ display: none; }
   .scanline, .blink, .map-overlay-label .green-dot{ animation: none; }
   #staticMap, #liveMap{ transition: none; }
 }
+
+/* ── Mobile info drawer ── */
+.topbar-mobile-info{
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border2);
+  background: var(--panel-bg2);
+  color: var(--text2);
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-left: auto;
+  transition: background .12s;
+}
+.topbar-mobile-info:hover{ background: var(--border); }
+.mobile-info-drawer{
+  position: fixed;
+  top: var(--topbar-h);
+  left: 0; right: 0;
+  background: var(--panel-bg);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 20px;
+  z-index: 99;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+.mobile-info-drawer.hidden{ display: none; }
+.mid-row{
+  font-size: 12.5px;
+  color: var(--text2);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.mid-count{ font-family: var(--mono); font-weight: 600; color: var(--green); }
+.mid-row a{ color: var(--accent); text-decoration: none; }
+
+/* ── Panel drag handle ── */
+.panel-drag-handle{
+  display: none;
+  justify-content: center;
+  padding: 10px 0 4px;
+  cursor: grab;
+  flex-shrink: 0;
+  touch-action: none;
+}
+.panel-drag-handle:active{ cursor: grabbing; }
+.drag-pill{
+  width: 36px; height: 4px;
+  background: var(--border2);
+  border-radius: 2px;
+}
+
+/* ════ TABLET (481px – 900px) ════ */
+@media (min-width: 481px) and (max-width: 900px){
+  :root{ --panel-w: min(420px, calc(100vw - 32px)); --topbar-h: 52px; }
+  .topbar{ padding: 0 14px; gap: 10px; }
+  .topbar-logo-text{ font-size: 13.5px; }
+  .topbar-logo-sub{ display: none; }
+  .topbar-counter{ font-size: 11.5px; }
+  .topbar-credit{ display: none; }
+  .topbar-right .topbar-divider{ display: none; }
+  .topbar-unofficial{ display: block; font-size: 10px; padding: 2px 8px; }
+  .panel{
+    top: calc(var(--topbar-h) + 14px);
+    left: 16px;
+    max-height: calc(100vh - var(--topbar-h) - 28px);
+  }
+  .panel-body{ padding: 14px 16px; }
+  .panel-header{ padding: 12px 16px 10px; }
+  .dropzone{ padding: 20px 14px; }
+  .dropzone-icon{ width: 30px; height: 30px; margin-bottom: 8px; }
+  .map-overlay-label{ bottom: 14px; right: 14px; font-size: 11px; }
+}
+
+/* ════ MOBILE PORTRAIT (≤480px) ════ */
+@media (max-width: 480px){
+  :root{ --topbar-h: 52px; }
+  html, body{ overflow: hidden; }
+  .topbar{ padding: 0 14px; gap: 10px; }
+  .topbar-logo-sub{ display: none; }
+  .topbar-divider{ display: none; }
+  .topbar-counter{ font-size: 11px; }
+  .topbar-right{ display: none; }
+  .topbar-mobile-info{ display: flex; }
+  #mapBg{ top: var(--topbar-h); bottom: 0; }
+  .panel{
+    position: fixed;
+    top: auto; left: 0; right: 0; bottom: 0;
+    width: 100%;
+    max-height: 68vh;
+    min-height: 180px;
+    border-radius: 16px 16px 0 0;
+    border-bottom: none;
+    box-shadow: 0 -4px 24px rgba(0,0,0,0.12);
+    transition: max-height .25s ease;
+  }
+  .panel-drag-handle{ display: flex; }
+  .panel-header{ padding: 10px 16px; }
+  .panel-subtitle{ font-size: 12px; }
+  .panel-body{ padding: 12px 16px 6px; }
+  .dropzone{ padding: 18px 12px; }
+  .dropzone-icon{ width: 28px; height: 28px; margin-bottom: 7px; }
+  .dropzone-title{ font-size: 13px; }
+  .dropzone-sub{ font-size: 11px; }
+  .step-text{ font-size: 12px; }
+  .instructions-title{ font-size: 10px; }
+  .coord-box .cv{ font-size: 13px; }
+  .actions{ gap: 8px; }
+  .btn{ font-size: 13px; padding: 11px 14px; }
+  .map-overlay-label{
+    bottom: calc(68vh + 10px);
+    right: auto; left: 12px;
+    font-size: 11px;
+  }
+  .result-thumb{ max-height: 110px; }
+  .footer-btn-row{ flex-wrap: wrap; gap: 6px; }
+  .panel-footer{ padding: 8px 14px; }
+}
+
+/* ════ MOBILE LANDSCAPE (short + wide) ════ */
+@media (max-width: 900px) and (max-height: 500px){
+  :root{ --panel-w: min(340px, 45vw); --topbar-h: 44px; }
+  .topbar{ padding: 0 12px; gap: 8px; }
+  .topbar-logo-icon{ width: 26px; height: 26px; }
+  .topbar-logo-text{ font-size: 12.5px; }
+  .topbar-logo-sub{ display: none; }
+  .topbar-right{ display: none; }
+  .topbar-mobile-info{ display: flex; }
+  .topbar-divider{ display: none; }
+  .panel{
+    position: fixed;
+    top: calc(var(--topbar-h) + 10px);
+    left: 12px; bottom: 10px;
+    width: var(--panel-w);
+    max-height: calc(100vh - var(--topbar-h) - 20px);
+    border-radius: var(--radius-lg);
+  }
+  .panel-drag-handle{ display: none; }
+  .panel-body{ padding: 10px 14px; }
+  .panel-header{ padding: 8px 14px; }
+  .dropzone{ padding: 14px 10px; }
+  .dropzone-icon{ width: 24px; height: 24px; margin-bottom: 6px; }
+  .dropzone-title{ font-size: 12px; }
+  .step-text{ font-size: 11.5px; }
+  .instructions{ margin-bottom: 10px; }
+  .panel-footer{ padding: 6px 12px; }
+  .map-overlay-label{ bottom: 10px; right: 10px; font-size: 10.5px; }
+}
 </style>
 </head>
 <body>
@@ -642,6 +795,17 @@ input[type=file]{ display: none; }
     <div class="topbar-divider"></div>
     <div class="topbar-credit">Built by <a href="mailto:contact@bluestardigital.bz">Blue Star Digital BZ</a></div>
   </div>
+  <button class="topbar-mobile-info" id="mobileInfoBtn" aria-label="About this tool">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+  </button>
+  <div class="mobile-info-drawer hidden" id="mobileInfoDrawer">
+    <div class="mid-row">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      <span id="mobileCountEl" class="mid-count">—</span> parcels located
+    </div>
+    <div class="mid-row">Unofficial · Privately Maintained</div>
+    <div class="mid-row"><a href="mailto:contact@bluestardigital.bz">Blue Star Digital BZ</a></div>
+  </div>
 </header>
 
 <!-- ══ MAP BACKGROUND ══ -->
@@ -664,6 +828,9 @@ input[type=file]{ display: none; }
 
 <!-- ══ FLOATING PANEL ══ -->
 <aside class="panel">
+  <div class="panel-drag-handle" id="panelDragHandle" aria-label="Drag to resize panel">
+    <div class="drag-pill"></div>
+  </div>
   <div class="panel-header">
     <div class="panel-subtitle">Upload a photo of a cadastral survey plan to extract its grid coordinates and locate it on the map.</div>
   </div>
@@ -936,17 +1103,23 @@ input[type=file]{ display: none; }
     liveMap.src = '';
   };
 
-  // ── Counter ──
+  // ── Counter (shared with mobile drawer) ──
+  var mobileCountEl = document.getElementById('mobileCountEl');
+  function syncCount(n){
+    if(n == null) return;
+    if(countEl) countEl.textContent = n;
+    if(mobileCountEl) mobileCountEl.textContent = n;
+  }
   function fetchCount(){
     fetch('/netlify/functions/counter')
       .then(function(r){ return r.json(); })
-      .then(function(d){ if(countEl && d.count!=null) countEl.textContent = d.count; })
+      .then(function(d){ syncCount(d.count); })
       .catch(function(){});
   }
   function incrementCount(){
     fetch('/netlify/functions/counter', { method: 'POST' })
       .then(function(r){ return r.json(); })
-      .then(function(d){ if(countEl && d.count!=null) countEl.textContent = d.count; })
+      .then(function(d){ syncCount(d.count); })
       .catch(function(){});
   }
   fetchCount();
@@ -993,6 +1166,49 @@ input[type=file]{ display: none; }
       closeAllFooterTips();
     }
   });
+
+  // ── Mobile info drawer toggle ──
+  var mobileInfoBtn = document.getElementById('mobileInfoBtn');
+  var mobileInfoDrawer = document.getElementById('mobileInfoDrawer');
+  if(mobileInfoBtn && mobileInfoDrawer){
+    mobileInfoBtn.addEventListener('click', function(e){
+      e.stopPropagation();
+      mobileInfoDrawer.classList.toggle('hidden');
+    });
+    document.addEventListener('click', function(e){
+      if(!mobileInfoDrawer.contains(e.target) && e.target !== mobileInfoBtn){
+        mobileInfoDrawer.classList.add('hidden');
+      }
+    });
+  }
+
+  // ── Panel drag-to-resize (mobile bottom sheet) ──
+  var dragHandle = document.getElementById('panelDragHandle');
+  var panelEl = document.querySelector('.panel');
+  if(dragHandle && panelEl){
+    var dragStartY = 0, dragStartH = 0, isDragging = false;
+    function dragStart(clientY){
+      isDragging = true;
+      dragStartY = clientY;
+      dragStartH = panelEl.getBoundingClientRect().height;
+      panelEl.style.transition = 'none';
+    }
+    function dragMove(clientY){
+      if(!isDragging) return;
+      var newH = Math.min(Math.max(dragStartH + (dragStartY - clientY), 160), window.innerHeight * 0.88);
+      panelEl.style.maxHeight = newH + 'px';
+    }
+    function dragEnd(){
+      isDragging = false;
+      panelEl.style.transition = '';
+    }
+    dragHandle.addEventListener('touchstart', function(e){ dragStart(e.touches[0].clientY); }, { passive: true });
+    document.addEventListener('touchmove', function(e){ if(isDragging) dragMove(e.touches[0].clientY); }, { passive: true });
+    document.addEventListener('touchend', dragEnd);
+    dragHandle.addEventListener('mousedown', function(e){ e.preventDefault(); dragStart(e.clientY); });
+    document.addEventListener('mousemove', function(e){ if(isDragging) dragMove(e.clientY); });
+    document.addEventListener('mouseup', dragEnd);
+  }
 
 })();
 </script>
