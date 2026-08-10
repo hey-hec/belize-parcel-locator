@@ -66,78 +66,98 @@ html, body{
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
-  padding: 0 20px;
-  gap: 16px;
+  padding: 0 16px;
+  gap: 0;
   z-index: 100;
   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  overflow: hidden;
+}
+/* Left zone: logo always visible */
+.topbar-left{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  min-width: 0;
 }
 .topbar-logo{
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 9px;
   text-decoration: none;
   flex-shrink: 0;
 }
 .topbar-logo-icon{
-  width: 32px; height: 32px;
+  width: 30px; height: 30px;
   background: var(--green-bg);
   border: 1.5px solid var(--green-badge);
-  border-radius: 8px;
+  border-radius: 7px;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
 .topbar-logo-text{
-  font-size: 14.5px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--text);
   line-height: 1.15;
   letter-spacing: -0.01em;
+  white-space: nowrap;
 }
 .topbar-logo-sub{
-  font-size: 10.5px;
+  font-size: 10px;
   color: var(--text3);
   font-weight: 400;
   letter-spacing: 0.03em;
+  white-space: nowrap;
 }
-.topbar-divider{
-  width: 1px; height: 26px;
-  background: var(--border);
-  flex-shrink: 0;
+/* Center zone: counter — grows to fill space */
+.topbar-center{
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 0 8px;
 }
 .topbar-counter{
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12.5px;
+  font-size: 12px;
   color: var(--text2);
   white-space: nowrap;
 }
 .topbar-counter-num{
   font-family: var(--mono);
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 500;
   color: var(--green);
 }
+/* Right zone: meta items */
 .topbar-right{
-  margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.topbar-divider{
+  width: 1px; height: 22px;
+  background: var(--border);
+  flex-shrink: 0;
 }
 .topbar-unofficial{
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 500;
   color: #92400e;
   background: var(--amber-bg);
   border: 1px solid #fde68a;
   border-radius: 999px;
-  padding: 3px 9px;
+  padding: 3px 8px;
   white-space: nowrap;
-  display: none;
 }
-@media (min-width: 680px){ .topbar-unofficial{ display: block; } }
 .topbar-credit{
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--text3);
   white-space: nowrap;
 }
@@ -316,6 +336,30 @@ html, body{
   color: var(--text3);
 }
 input[type=file]{ display: none; }
+
+/* ── Mobile upload button (replaces dropzone on small screens) ── */
+.upload-btn-mobile{
+  display: none;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px;
+  background: var(--green);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.01em;
+  transition: background .15s;
+  -webkit-tap-highlight-color: transparent;
+  min-height: 54px;
+}
+.upload-btn-mobile:hover{ background: #15803d; }
+.upload-btn-mobile svg{ flex-shrink: 0; }
 
 /* ════════════════════════════════
    PANEL FOOTER
@@ -654,32 +698,42 @@ input[type=file]{ display: none; }
 .mid-count{ font-family: var(--mono); font-weight: 600; color: var(--green); }
 .mid-row a{ color: var(--accent); text-decoration: none; }
 
-/* ── Panel drag handle ── */
+/* ── Panel snap handle ── */
 .panel-drag-handle{
   display: none;
   justify-content: center;
-  padding: 10px 0 4px;
-  cursor: grab;
+  align-items: center;
+  padding: 10px 0 6px;
+  cursor: pointer;
   flex-shrink: 0;
   touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
-.panel-drag-handle:active{ cursor: grabbing; }
 .drag-pill{
   width: 36px; height: 4px;
   background: var(--border2);
   border-radius: 2px;
+  transition: background .15s, width .15s;
+}
+.panel-drag-handle:hover .drag-pill,
+.panel-drag-handle:active .drag-pill{
+  background: var(--border2);
+  width: 44px;
+}
+/* Snap states — driven by JS adding/removing .sheet-collapsed */
+.panel{
+  transition: max-height 0.38s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 /* ════ TABLET (481px – 900px) ════ */
 @media (min-width: 481px) and (max-width: 900px){
-  :root{ --panel-w: min(420px, calc(100vw - 32px)); --topbar-h: 52px; }
-  .topbar{ padding: 0 14px; gap: 10px; }
-  .topbar-logo-text{ font-size: 13.5px; }
-  .topbar-logo-sub{ display: none; }
-  .topbar-counter{ font-size: 11.5px; }
+  :root{ --panel-w: min(400px, calc(100vw - 32px)); --topbar-h: 52px; }
+  /* Topbar: hide credit to save space, keep unofficial pill */
   .topbar-credit{ display: none; }
-  .topbar-right .topbar-divider{ display: none; }
-  .topbar-unofficial{ display: block; font-size: 10px; padding: 2px 8px; }
+  .topbar-unofficial{ display: block; }
+  #topbarRight .topbar-divider{ display: none; }
+  .topbar-logo-sub{ display: none; }
   .panel{
     top: calc(var(--topbar-h) + 14px);
     left: 16px;
@@ -696,32 +750,29 @@ input[type=file]{ display: none; }
 @media (max-width: 480px){
   :root{ --topbar-h: 52px; }
   html, body{ overflow: hidden; }
-  .topbar{ padding: 0 14px; gap: 10px; }
-  .topbar-logo-sub{ display: none; }
-  .topbar-divider{ display: none; }
-  .topbar-counter{ font-size: 11px; }
-  .topbar-right{ display: none; }
+  /* Topbar: left+center only, info btn on right */
+  #topbarRight{ display: none; }
   .topbar-mobile-info{ display: flex; }
+  .topbar-logo-sub{ font-size: 9.5px; }
   #mapBg{ top: var(--topbar-h); bottom: 0; }
+  /* Snap sheet */
   .panel{
     position: fixed;
     top: auto; left: 0; right: 0; bottom: 0;
     width: 100%;
     max-height: 68vh;
-    min-height: 180px;
+    min-height: 90px;
     border-radius: 16px 16px 0 0;
     border-bottom: none;
     box-shadow: 0 -4px 24px rgba(0,0,0,0.12);
-    transition: max-height .25s ease;
   }
   .panel-drag-handle{ display: flex; }
-  .panel-header{ padding: 10px 16px; }
+  .panel-header{ padding: 10px 16px; cursor: pointer; }
   .panel-subtitle{ font-size: 12px; }
   .panel-body{ padding: 12px 16px 6px; }
-  .dropzone{ padding: 18px 12px; }
-  .dropzone-icon{ width: 28px; height: 28px; margin-bottom: 7px; }
-  .dropzone-title{ font-size: 13px; }
-  .dropzone-sub{ font-size: 11px; }
+  /* Hide desktop dropzone, show mobile upload button */
+  .dropzone{ display: none; }
+  .upload-btn-mobile{ display: flex; margin-bottom: 4px; }
   .step-text{ font-size: 12px; }
   .instructions-title{ font-size: 10px; }
   .coord-box .cv{ font-size: 13px; }
@@ -740,13 +791,11 @@ input[type=file]{ display: none; }
 /* ════ MOBILE LANDSCAPE (short + wide) ════ */
 @media (max-width: 900px) and (max-height: 500px){
   :root{ --panel-w: min(340px, 45vw); --topbar-h: 44px; }
-  .topbar{ padding: 0 12px; gap: 8px; }
   .topbar-logo-icon{ width: 26px; height: 26px; }
   .topbar-logo-text{ font-size: 12.5px; }
   .topbar-logo-sub{ display: none; }
-  .topbar-right{ display: none; }
+  #topbarRight{ display: none; }
   .topbar-mobile-info{ display: flex; }
-  .topbar-divider{ display: none; }
   .panel{
     position: fixed;
     top: calc(var(--topbar-h) + 10px);
@@ -758,9 +807,12 @@ input[type=file]{ display: none; }
   .panel-drag-handle{ display: none; }
   .panel-body{ padding: 10px 14px; }
   .panel-header{ padding: 8px 14px; }
-  .dropzone{ padding: 14px 10px; }
-  .dropzone-icon{ width: 24px; height: 24px; margin-bottom: 6px; }
+  /* Landscape: keep dropzone but compact, hide mobile btn */
+  .upload-btn-mobile{ display: none; }
+  .dropzone{ padding: 12px 10px; }
+  .dropzone-icon{ width: 22px; height: 22px; margin-bottom: 5px; }
   .dropzone-title{ font-size: 12px; }
+  .dropzone-sub{ font-size: 10.5px; }
   .step-text{ font-size: 11.5px; }
   .instructions{ margin-bottom: 10px; }
   .panel-footer{ padding: 6px 12px; }
@@ -772,25 +824,31 @@ input[type=file]{ display: none; }
 
 <!-- ══ TOP BAR ══ -->
 <header class="topbar">
-  <div class="topbar-logo">
-    <div class="topbar-logo-icon">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.2" stroke-linecap="round">
-        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-        <circle cx="12" cy="10" r="3"/>
-      </svg>
-    </div>
-    <div>
-      <div class="topbar-logo-text">Belize Parcel Locator</div>
-      <div class="topbar-logo-sub">Unofficial · Cadastral Survey Tool</div>
+  <!-- Left: logo -->
+  <div class="topbar-left">
+    <div class="topbar-logo">
+      <div class="topbar-logo-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.2" stroke-linecap="round">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+          <circle cx="12" cy="10" r="3"/>
+        </svg>
+      </div>
+      <div>
+        <div class="topbar-logo-text">Belize Parcel Locator</div>
+        <div class="topbar-logo-sub">Unofficial · Cadastral Survey Tool</div>
+      </div>
     </div>
   </div>
-  <div class="topbar-divider"></div>
-  <div class="topbar-counter">
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--green)"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-    <span id="successCount" class="topbar-counter-num">—</span>
-    <span>parcels located</span>
+  <!-- Center: counter -->
+  <div class="topbar-center">
+    <div class="topbar-counter">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--green);flex-shrink:0"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      <span id="successCount" class="topbar-counter-num">—</span>
+      <span>parcels located</span>
+    </div>
   </div>
-  <div class="topbar-right">
+  <!-- Right: meta (hidden on mobile, replaced by info btn) -->
+  <div class="topbar-right" id="topbarRight">
     <span class="topbar-unofficial">Unofficial · Privately Maintained</span>
     <div class="topbar-divider"></div>
     <div class="topbar-credit">Built by <a href="mailto:contact@bluestardigital.bz">Blue Star Digital BZ</a></div>
@@ -847,6 +905,11 @@ input[type=file]{ display: none; }
       <div class="dropzone-sub">JPG or PNG · the N and E grid-coordinate labels must be visible in frame</div>
       <input type="file" id="fileInput" accept="image/*">
     </div>
+    <!-- Mobile: prominent upload button replaces the dropzone -->
+    <button class="upload-btn-mobile" id="uploadBtnMobile">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      Upload Survey Photo
+    </button>
 
     <!-- Instructions -->
     <div style="height:14px"></div>
@@ -1182,32 +1245,93 @@ input[type=file]{ display: none; }
     });
   }
 
-  // ── Panel drag-to-resize (mobile bottom sheet) ──
-  var dragHandle = document.getElementById('panelDragHandle');
-  var panelEl = document.querySelector('.panel');
-  if(dragHandle && panelEl){
-    var dragStartY = 0, dragStartH = 0, isDragging = false;
-    function dragStart(clientY){
-      isDragging = true;
-      dragStartY = clientY;
-      dragStartH = panelEl.getBoundingClientRect().height;
-      panelEl.style.transition = 'none';
+  // ── Panel snap sheet (mobile) ──
+  // Two states only: collapsed (handle + header visible) or expanded (68vh)
+  var snapHandle = document.getElementById('panelDragHandle');
+  var snapPanel  = document.querySelector('.panel');
+  var EXPANDED_VH = 0.68;    // 68% of viewport height when open
+  var COLLAPSED_H = 90;      // px — just handle + header visible
+  var sheetOpen = true;      // starts open
+
+  function isMobileSheet(){
+    // Only snap on mobile portrait
+    return window.innerWidth <= 480 && window.innerHeight > window.innerWidth;
+  }
+
+  function setSheet(open, animate){
+    if(!isMobileSheet()) return;
+    sheetOpen = open;
+    if(!animate) snapPanel.style.transition = 'none';
+    snapPanel.style.maxHeight = open
+      ? Math.round(window.innerHeight * EXPANDED_VH) + 'px'
+      : COLLAPSED_H + 'px';
+    if(!animate){
+      // force reflow then restore transition
+      snapPanel.getBoundingClientRect();
+      snapPanel.style.transition = '';
     }
-    function dragMove(clientY){
-      if(!isDragging) return;
-      var newH = Math.min(Math.max(dragStartH + (dragStartY - clientY), 160), window.innerHeight * 0.88);
-      panelEl.style.maxHeight = newH + 'px';
+    // Update pill width as visual affordance
+    var pill = snapPanel.querySelector('.drag-pill');
+    if(pill) pill.style.width = open ? '36px' : '48px';
+  }
+
+  function toggleSheet(){ setSheet(!sheetOpen, true); }
+
+  if(snapHandle && snapPanel){
+    // Tap handle to toggle
+    snapHandle.addEventListener('click', toggleSheet);
+
+    // Swipe gesture on handle: track velocity + direction
+    var swipeStartY = 0, swipeStartTime = 0, swipeMoved = false;
+
+    snapHandle.addEventListener('touchstart', function(e){
+      swipeStartY = e.touches[0].clientY;
+      swipeStartTime = Date.now();
+      swipeMoved = false;
+    }, { passive: true });
+
+    snapHandle.addEventListener('touchmove', function(e){
+      swipeMoved = true;
+    }, { passive: true });
+
+    snapHandle.addEventListener('touchend', function(e){
+      if(!swipeMoved) return; // pure tap handled by click
+      var dy = e.changedTouches[0].clientY - swipeStartY;
+      var dt = Date.now() - swipeStartTime;
+      var velocity = Math.abs(dy) / dt; // px/ms
+      // Swipe up (negative dy) → open; swipe down → close
+      // Trigger on velocity > 0.3 px/ms OR travel > 40px
+      if(Math.abs(dy) > 40 || velocity > 0.3){
+        setSheet(dy < 0, true); // up = open, down = close
+      }
+    }, { passive: true });
+
+    // Also allow tapping the panel header to expand if collapsed
+    var panelHeader = snapPanel.querySelector('.panel-header');
+    if(panelHeader){
+      panelHeader.addEventListener('click', function(){
+        if(!sheetOpen) setSheet(true, true);
+      });
     }
-    function dragEnd(){
-      isDragging = false;
-      panelEl.style.transition = '';
-    }
-    dragHandle.addEventListener('touchstart', function(e){ dragStart(e.touches[0].clientY); }, { passive: true });
-    document.addEventListener('touchmove', function(e){ if(isDragging) dragMove(e.touches[0].clientY); }, { passive: true });
-    document.addEventListener('touchend', dragEnd);
-    dragHandle.addEventListener('mousedown', function(e){ e.preventDefault(); dragStart(e.clientY); });
-    document.addEventListener('mousemove', function(e){ if(isDragging) dragMove(e.clientY); });
-    document.addEventListener('mouseup', dragEnd);
+
+    // On resize (e.g. orientation change), reset to expanded
+    window.addEventListener('resize', function(){
+      if(isMobileSheet()) setSheet(true, false);
+    });
+  }
+
+  // ── Upload button mobile wiring ──
+  var uploadBtnMobile = document.getElementById('uploadBtnMobile');
+  if(uploadBtnMobile){
+    uploadBtnMobile.addEventListener('click', function(){
+      // If sheet is collapsed, expand first then open picker
+      if(isMobileSheet() && !sheetOpen){
+        setSheet(true, true);
+        setTimeout(function(){ fileInput.click(); }, 380);
+      } else {
+        fileInput.click();
+      }
+    });
   }
 
 })();
