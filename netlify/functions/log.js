@@ -29,6 +29,8 @@ export default async (req) => {
     const { easting, northing, latitude, longitude, maps_url, confidence, user_agent } = body;
 
     console.log('Inserting row:', { easting, northing, latitude, longitude, maps_url, confidence });
+  console.log('SUPABASE_URL present:', !!SUPABASE_URL, '| URL tail:', SUPABASE_URL ? SUPABASE_URL.slice(-10) : 'MISSING');
+  console.log('ANON_KEY present:', !!SUPABASE_ANON_KEY, '| Key tail:', SUPABASE_ANON_KEY ? SUPABASE_ANON_KEY.slice(-8) : 'MISSING');
 
     const res = await fetch(`${SUPABASE_URL}/rest/v1/parcel_lookups`, {
       method: 'POST',
