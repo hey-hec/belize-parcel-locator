@@ -720,32 +720,7 @@ input[type=file]{ display: none; }
   100%{ content: ''; }
 }
 
-/* ── Sound toggle ── */
-.sound-toggle{
-  width: 36px; height: 20px;
-  border-radius: 999px;
-  border: none;
-  background: var(--border2);
-  padding: 2px;
-  cursor: pointer;
-  position: relative;
-  transition: background .2s;
-  flex-shrink: 0;
-}
-.sound-toggle[aria-pressed="true"]{ background: var(--green); }
-.sound-toggle-knob{
-  display: block;
-  width: 16px; height: 16px;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-  transition: transform .2s;
-  position: absolute;
-  top: 2px; left: 2px;
-}
-.sound-toggle[aria-pressed="true"] .sound-toggle-knob{
-  transform: translateX(16px);
-}
+
 
 /* ── Mobile info drawer ── */
 .topbar-mobile-info{
@@ -912,6 +887,87 @@ input[type=file]{ display: none; }
   .panel-footer{ padding: 6px 12px; }
   .map-overlay-label{ bottom: 10px; right: 10px; font-size: 10.5px; }
 }
+
+/* ════════════════════════════════
+   CONTACT CAPTURE CARD
+════════════════════════════════ */
+.contact-card{
+  background: var(--panel-bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-top: 14px;
+}
+.contact-card-title{
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.contact-card-sub{
+  font-size: 11.5px;
+  color: var(--text2);
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+.contact-field{
+  margin-bottom: 9px;
+}
+.contact-field label{
+  display: block;
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text3);
+  margin-bottom: 4px;
+}
+.contact-field input{
+  width: 100%;
+  font-family: var(--sans);
+  font-size: 13px;
+  padding: 8px 10px;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  background: var(--panel-bg);
+  color: var(--text);
+  outline: none;
+  transition: border-color .15s;
+}
+.contact-field input:focus{ border-color: var(--green); }
+.contact-field input::placeholder{ color: var(--text3); }
+.contact-submit-row{
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+.contact-submit-row .btn{
+  flex: 1;
+  min-width: 120px;
+}
+.contact-skip{
+  font-size: 11.5px;
+  color: var(--text3);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  font-family: var(--sans);
+  text-decoration: underline;
+  white-space: nowrap;
+}
+.contact-skip:hover{ color: var(--text2); }
+.contact-success{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--green);
+  padding: 6px 0;
+}
+.contact-success svg{ flex-shrink: 0; }
 </style>
 </head>
 <body>
@@ -963,13 +1019,7 @@ input[type=file]{ display: none; }
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text3)"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
       <span>Built by <a href="mailto:contact@bluestardigital.bz">Blue Star Digital BZ</a></span>
     </div>
-    <div class="mid-row" style="padding-top:4px;border-top:1px solid var(--border);margin-top:2px">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text3)"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-      <span style="flex:1">Sound effects</span>
-      <button class="sound-toggle" id="soundToggle" aria-label="Toggle sound" aria-pressed="false">
-        <span class="sound-toggle-knob"></span>
-      </button>
-    </div>
+
   </div>
 </header>
 
@@ -1178,7 +1228,6 @@ input[type=file]{ display: none; }
       '<div class="result-divider"></div>' +
       '<div class="result-label">Uploaded plan</div>' +
       '<div class="scan-wrap"><img src="'+imgUrl+'" alt="Survey plan"><div class="scanline"></div></div>';
-    playSound('shutter');
   }
 
   // ── Render: error ──
@@ -1261,11 +1310,40 @@ input[type=file]{ display: none; }
           '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4"/></svg>' +
           'Locate another parcel' +
         '</button>' +
+      '</div>' +
+      '<div class="contact-card" id="contactCard">' +
+        '<div class="contact-card-title">Get a copy of these results</div>' +
+        '<div class="contact-card-sub">Enter your details and we'll send you the coordinates and map link. Completely optional.</div>' +
+        '<div class="contact-field"><label>Name</label><input type="text" id="contactName" placeholder="Your name" autocomplete="name"></div>' +
+        '<div class="contact-field"><label>Email</label><input type="email" id="contactEmail" placeholder="your@email.com" autocomplete="email"></div>' +
+        '<div class="contact-field"><label>WhatsApp <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label><input type="tel" id="contactWhatsapp" placeholder="+501 600 0000" autocomplete="tel"></div>' +
+        '<div class="contact-submit-row">' +
+          '<button class="btn btn-primary" onclick="submitContact()" id="contactSubmitBtn">Send me the results</button>' +
+          '<button class="contact-skip" onclick="skipContact()">No thanks</button>' +
+        '</div>' +
       '</div>';
 
     fileInput.value = '';
     incrementCount();
-    playSound('success');
+
+    // ── Log to Supabase ──
+    currentLookupId = null;
+    fetch('/netlify/functions/log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'insert',
+        easting: parsed.easting,
+        northing: parsed.northing,
+        latitude: lat,
+        longitude: lon,
+        maps_url: mapsUrl,
+        confidence: confidence,
+        user_agent: navigator.userAgent
+      })
+    }).then(function(r){ return r.json(); })
+      .then(function(d){ if(d.id) currentLookupId = d.id; })
+      .catch(function(){});
   }
 
   // ── Map swap ──
@@ -1318,6 +1396,58 @@ input[type=file]{ display: none; }
       .catch(function(){});
   }
   fetchCount();
+
+  // ── Contact capture ──
+  var currentLookupId = null;
+
+  window.submitContact = function(){
+    var name = (document.getElementById('contactName') || {}).value || '';
+    var email = (document.getElementById('contactEmail') || {}).value || '';
+    var whatsapp = (document.getElementById('contactWhatsapp') || {}).value || '';
+    var btn = document.getElementById('contactSubmitBtn');
+    var card = document.getElementById('contactCard');
+
+    if(!name && !email){
+      var nameEl = document.getElementById('contactName');
+      if(nameEl){ nameEl.focus(); nameEl.style.borderColor = 'var(--red)'; }
+      return;
+    }
+
+    if(btn){ btn.textContent = 'Sending...'; btn.disabled = true; }
+
+    fetch('/netlify/functions/log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'update_contact',
+        id: currentLookupId,
+        contact_name: name,
+        contact_email: email,
+        contact_whatsapp: whatsapp
+      })
+    }).then(function(r){ return r.json(); })
+      .then(function(){
+        if(card){
+          card.innerHTML =
+            '<div class="contact-success">' +
+              '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>' +
+              'Thanks ' + escapeHtml(name.split(' ')[0] || 'you') + '! We'll be in touch.' +
+            '</div>';
+        }
+      })
+      .catch(function(){
+        if(btn){ btn.textContent = 'Try again'; btn.disabled = false; }
+      });
+  };
+
+  window.skipContact = function(){
+    var card = document.getElementById('contactCard');
+    if(card){
+      card.style.transition = 'opacity .2s';
+      card.style.opacity = '0';
+      setTimeout(function(){ card.style.display = 'none'; }, 220);
+    }
+  };
 
   function escapeHtml(str){
     var d = document.createElement('div'); d.textContent = str; return d.innerHTML;
@@ -1402,6 +1532,9 @@ input[type=file]{ display: none; }
       ? Math.round(window.innerHeight * EXPANDED_VH) + 'px'
       : '0px';
     snapPanel.style.boxShadow = open ? '0 -4px 24px rgba(0,0,0,0.12)' : 'none';
+    // Hide the drag handle entirely when sheet is closed
+    var handle = document.getElementById('panelDragHandle');
+    if(handle) handle.style.display = open ? 'flex' : 'none';
     if(!animate){
       snapPanel.getBoundingClientRect();
       snapPanel.style.transition = '';
@@ -1490,46 +1623,7 @@ input[type=file]{ display: none; }
     uploadBtnMobile.addEventListener('click', function(){ fileInput.click(); });
   }
 
-  // ── Sound engine (opt-in) ──
-  var soundEnabled = false;
-  var soundToggle = document.getElementById('soundToggle');
-  if(soundToggle){
-    soundToggle.addEventListener('click', function(e){
-      e.stopPropagation();
-      soundEnabled = !soundEnabled;
-      soundToggle.setAttribute('aria-pressed', soundEnabled ? 'true' : 'false');
-    });
-  }
 
-  function playSound(type){
-    if(!soundEnabled) return;
-    try{
-      var ctx = new (window.AudioContext || window.webkitAudioContext)();
-      var osc = ctx.createOscillator();
-      var gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      if(type === 'shutter'){
-        // Soft click: short noise burst
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(800, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.08);
-        gain.gain.setValueAtTime(0.18, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.1);
-      } else if(type === 'success'){
-        // Two-tone chime: pleasant rising interval
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(523, ctx.currentTime);        // C5
-        osc.frequency.setValueAtTime(784, ctx.currentTime + 0.18); // G5
-        gain.gain.setValueAtTime(0.15, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.55);
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.55);
-      }
-    }catch(e){ /* audio not available, silent fallback */ }
-  }
 
 })();
 </script>
