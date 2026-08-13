@@ -1,5 +1,3 @@
-const SUPABASE_URL = 'https://zlzkdmdiqvkhzokovykw.supabase.co';
-
 export default async (req) => {
   const corsHeaders = {
     'Content-Type': 'application/json',
@@ -10,8 +8,11 @@ export default async (req) => {
     return new Response('', { status: 204, headers: corsHeaders });
   }
 
+  // Both values come from Netlify environment variables — never hardcoded
+  const SUPABASE_URL      = Netlify.env.get('SUPABASE_URL');
   const SUPABASE_ANON_KEY = Netlify.env.get('SUPABASE_ANON_KEY');
-  if (!SUPABASE_ANON_KEY) {
+
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     return new Response(JSON.stringify({ error: 'Supabase not configured' }), { status: 500, headers: corsHeaders });
   }
 
@@ -37,7 +38,6 @@ export default async (req) => {
     });
     const data = await res.json();
     if (!res.ok) return new Response(JSON.stringify({ error: data }), { status: res.status, headers: corsHeaders });
-    // Return the new record's id so the frontend can patch contact info later
     return new Response(JSON.stringify({ id: data[0]?.id }), { status: 200, headers: corsHeaders });
   }
 
