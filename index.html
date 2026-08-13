@@ -1141,14 +1141,26 @@ input[type=file]{ display: none; }
   dropzone.addEventListener('keydown', function(e){
     if(e.key==='Enter'||e.key===' '){ e.preventDefault(); fileInput.click(); }
   });
+  // Drag enter/over — highlight the zone and allow drop
   ['dragenter','dragover'].forEach(function(evt){
-    dropzone.addEventListener(evt, function(e){ e.preventDefault(); dropzone.classList.add('dragover'); });
+    dropzone.addEventListener(evt, function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      dropzone.classList.add('dragover');
+    });
   });
-  ['dragleave','drop'].forEach(function(evt){
-    dropzone.addEventListener(evt, function(e){ e.preventDefault(); dropzone.classList.remove('dragover'); });
+  // Drag leave — remove highlight (but not on drop)
+  dropzone.addEventListener('dragleave', function(e){
+    e.preventDefault();
+    dropzone.classList.remove('dragover');
   });
+  // Drop — remove highlight and process the file
   dropzone.addEventListener('drop', function(e){
-    var f = e.dataTransfer.files && e.dataTransfer.files[0]; if(f) handleFile(f);
+    e.preventDefault();
+    e.stopPropagation();
+    dropzone.classList.remove('dragover');
+    var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if(f) handleFile(f);
   });
   fileInput.addEventListener('change', function(e){
     var f = e.target.files && e.target.files[0]; if(f) handleFile(f);
