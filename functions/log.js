@@ -12,7 +12,7 @@ async function sendEmail(resendKey, subject, html) {
       'Authorization': `Bearer ${resendKey}`
     },
     body: JSON.stringify({
-      from: 'Belize Land Locator <onboarding@resend.dev>',
+      from: 'Belize Land Locator <notifications@app.bluestardigital.bz>',
       to: ['contact@bluestardigital.bz'],
       subject,
       html
