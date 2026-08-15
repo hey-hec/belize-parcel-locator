@@ -30,6 +30,9 @@ export async function onRequestPost(context) {
   const SUPABASE_KEY  = env.SUPABASE_SERVICE_KEY;
   const RESEND_KEY    = env.RESEND_API_KEY;
 
+  console.log('RESEND_KEY present:', !!RESEND_KEY, '| tail:', RESEND_KEY ? RESEND_KEY.slice(-6) : 'MISSING');
+  console.log('SUPABASE_URL present:', !!SUPABASE_URL);
+
   if (!SUPABASE_URL || !SUPABASE_KEY) {
     return new Response(JSON.stringify({ error: 'Supabase not configured' }), { status: 500, headers: corsHeaders });
   }
