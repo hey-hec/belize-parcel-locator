@@ -1208,7 +1208,7 @@ input[type=file]{ display: none; }
 
   // ── API call ──
   function analyzeImage(base64, mediaType){
-    return fetch('/functions/analyze', {
+    return fetch('/analyze', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ base64: base64, mediaType: mediaType })
@@ -1340,7 +1340,7 @@ input[type=file]{ display: none; }
 
     // ── Log to Supabase ──
     currentLookupId = null;
-    fetch('/functions/log', {
+    fetch('/log', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -1396,13 +1396,13 @@ input[type=file]{ display: none; }
     if(mobileCountEl) mobileCountEl.textContent = n;
   }
   function fetchCount(){
-    fetch('/functions/counter')
+    fetch('/counter')
       .then(function(r){ return r.json(); })
       .then(function(d){ syncCount(d.count); })
       .catch(function(){});
   }
   function incrementCount(){
-    fetch('/functions/counter', { method: 'POST' })
+    fetch('/counter', { method: 'POST' })
       .then(function(r){ return r.json(); })
       .then(function(d){ syncCount(d.count); })
       .catch(function(){});
@@ -1427,7 +1427,7 @@ input[type=file]{ display: none; }
 
     if(btn){ btn.textContent = 'Sending...'; btn.disabled = true; }
 
-    fetch('/functions/log', {
+    fetch('/log', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
