@@ -101,8 +101,9 @@ export async function onRequestPost(context) {
           </p>
         </div>`;
 
-      sendEmail(RESEND_KEY, `📍 New parcel located — ${Number(latitude).toFixed(4)}, ${Number(longitude).toFixed(4)}`, html)
-        .catch(e => console.error('Email error:', e));
+      try {
+        await sendEmail(RESEND_KEY, `📍 New parcel located — ${Number(latitude).toFixed(4)}, ${Number(longitude).toFixed(4)}`, html);
+      } catch(e) { console.error('Email error:', e.message); }
     }
 
     return new Response(JSON.stringify({ id: recordId }), { status: 200, headers: corsHeaders });
@@ -155,8 +156,9 @@ export async function onRequestPost(context) {
           </p>
         </div>`;
 
-      sendEmail(RESEND_KEY, `👤 New contact — ${contact_name || contact_email || 'unknown'}`, html)
-        .catch(e => console.error('Email error:', e));
+      try {
+        await sendEmail(RESEND_KEY, `👤 New contact — ${contact_name || contact_email || 'unknown'}`, html);
+      } catch(e) { console.error('Email error:', e.message); }
     }
 
     return new Response(JSON.stringify({ ok: true }), { status: 200, headers: corsHeaders });
