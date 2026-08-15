@@ -7,9 +7,9 @@ export async function onRequestPost(context) {
   const { request, env } = context;
 
   const SUPABASE_URL      = env.SUPABASE_URL;
-  const SUPABASE_ANON_KEY = env.SUPABASE_ANON_KEY;
+  const SUPABASE_KEY      = env.SUPABASE_SERVICE_KEY;
 
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
     return new Response(JSON.stringify({ error: 'Supabase not configured' }), { status: 500, headers: corsHeaders });
   }
 
@@ -28,8 +28,8 @@ export async function onRequestPost(context) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
         'Prefer': 'return=representation'
       },
       body: JSON.stringify({ easting, northing, latitude, longitude, maps_url, confidence, user_agent })
@@ -56,8 +56,8 @@ export async function onRequestPost(context) {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`
       },
       body: JSON.stringify({ contact_name, contact_email, contact_whatsapp })
     });
