@@ -1273,7 +1273,7 @@ input[type=file]{ display: none; }
       return;
     }
 
-    var proj = '+proj=utm +zone=16 +datum=WGS84 +units=m +no_defs';
+    var proj = '+proj=utm +zone=16 +ellps=clrk66 +towgs84=-8,160,176 +units=m +no_defs'; // NAD27 Central America → WGS84
     var lonlat;
     try{ lonlat = proj4(proj, 'WGS84', [parsed.easting, parsed.northing]); }
     catch(e){ renderError('Found coordinates but could not convert them (' + e.message + ').'); return; }
