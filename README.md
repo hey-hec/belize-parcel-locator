@@ -3,7 +3,7 @@ An unofficial tool designed to help land owners identify and locate land parcels
 
 ## How to Use
 
-Visit the live site: https://belizeparcellocator.netlify.app/
+Visit the live site: https://bzlandlocator.pages.dev/
 
 Upload a photo of your parcel map that the government provides.
 
