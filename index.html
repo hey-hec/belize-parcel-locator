@@ -300,6 +300,97 @@ html, body{
 }
 
 /* ════════════════════════════════
+   DATUM TOGGLE — historical NAD27 shift
+════════════════════════════════ */
+.datum-toggle{
+  margin-top: 16px;
+  margin-bottom: 2px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel-bg2);
+  padding: 11px 13px;
+  transition: border-color .18s ease, background .18s ease;
+}
+.datum-toggle.on{
+  border-color: var(--warn-border);
+  background: var(--amber-bg);
+}
+.datum-toggle-row{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.datum-toggle-text{
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.datum-toggle-title{
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.3;
+}
+.datum-toggle-sub{
+  font-size: 11px;
+  color: var(--text3);
+  line-height: 1.4;
+}
+.datum-toggle.on .datum-toggle-sub{ color: var(--amber); }
+
+/* Switch */
+.switch{
+  position: relative;
+  flex-shrink: 0;
+  width: 38px;
+  height: 22px;
+}
+.switch input{
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 1;
+}
+.switch-track{
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: var(--border2);
+  transition: background .18s ease;
+}
+.switch-thumb{
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.25);
+  transition: transform .18s ease;
+}
+.switch input:checked + .switch-track{ background: var(--amber); }
+.switch input:checked + .switch-track + .switch-thumb{ transform: translateX(16px); }
+
+/* Datum mode note in results */
+.datum-note{
+  font-size: 11px;
+  color: var(--text3);
+  line-height: 1.4;
+  margin: -3px 0 8px;
+}
+.datum-note strong{ color: var(--text2); font-weight: 600; }
+
+/* ════════════════════════════════
    DROPZONE
 ════════════════════════════════ */
 .dropzone{
@@ -1096,6 +1187,21 @@ input[type=file]{ display: none; }
       </div>
     </div>
 
+    <!-- Datum mode: modern WGS84 by default; optional historical NAD27 shift -->
+    <div class="datum-toggle" id="datumToggle">
+      <label class="datum-toggle-row" for="datumShiftToggle">
+        <span class="datum-toggle-text">
+          <span class="datum-toggle-title">Historical Survey Shift (NAD27)</span>
+          <span class="datum-toggle-sub" id="datumToggleSub">Off — assuming modern WGS84 grid (EPSG:32616) · Location 1</span>
+        </span>
+        <span class="switch">
+          <input type="checkbox" id="datumShiftToggle" aria-describedby="datumToggleSub">
+          <span class="switch-track"></span>
+          <span class="switch-thumb"></span>
+        </span>
+      </label>
+    </div>
+
     <!-- Results injected here -->
     <div id="resultsArea"></div>
 
@@ -1119,7 +1225,7 @@ input[type=file]{ display: none; }
       This is an <strong>unofficial, privately maintained tool</strong> — not affiliated with, endorsed by, or connected to the Government of Belize, the Lands &amp; Survey Department, or any official registry. Always verify against official parcel records before any legal or financial decision.
     </div>
     <div class="footer-tooltip hidden" id="accuracyTip">
-      Coordinate reading is done by an AI model and can occasionally misread numbers that are blurry, cropped, or at an unusual angle. If the converted position falls outside Belize the tool will warn you, which usually means the plan uses a different grid system.
+      Coordinate reading is done by an AI model and can occasionally misread numbers that are blurry, cropped, or at an unusual angle. By default the tool assumes the modern WGS84 grid. Older plans were often surveyed on the NAD27 datum — if the result looks off, flip the "Historical Survey Shift (NAD27)" toggle above to apply the standard shift (Location 2). If the converted position falls outside Belize, the plan may use a different grid system.
     </div>
   </div>
 </aside>
@@ -1135,6 +1241,117 @@ input[type=file]{ display: none; }
   var mapOverlayText = document.getElementById('mapOverlayText');
   var countEl     = document.getElementById('successCount');
   var instructions = document.getElementById('instructions');
+
+  // ── Datum engine ──
+  // Strict default: grid values are treated as MODERN WGS84 UTM Zone 16N
+  // (EPSG:32616) — no datum shift is ever applied unless the user opts in.
+  var UTM_WGS84 = '+proj=utm +zone=16 +datum=WGS84 +units=m +no_defs';
+  // Historical override: NAD27 (Clarke 1866) with the COMPLETE 3-parameter
+  // datum shift to WGS84 (dx, dy, dz in metres). The tuple below is the single
+  // source of truth and is validated before every use, so a partial shift — one
+  // axis transformed while another silently defaults to 0 — can never happen.
+  var NAD27_SHIFT = [-8, 160, 176];
+  var UTM_NAD27 = '+proj=utm +zone=16 +ellps=clrk66 +towgs84=' + NAD27_SHIFT.join(',') + ' +units=m +no_defs';
+
+  // A datum-shift tuple must be a complete 3- or 7-parameter list of finite numbers.
+  function assertCompleteShift(tuple){
+    if(!Array.isArray(tuple) || (tuple.length !== 3 && tuple.length !== 7)){
+      throw new Error('datum shift must be a complete 3- or 7-parameter tuple');
+    }
+    for(var i = 0; i < tuple.length; i++){
+      if(typeof tuple[i] !== 'number' || !isFinite(tuple[i])){
+        throw new Error('datum shift parameter ' + (i + 1) + ' is not a finite number');
+      }
+    }
+    return tuple;
+  }
+
+  // Parse + validate the +towgs84= portion of a proj4 definition string. A
+  // malformed string (wrong component count, empty, or non-numeric parts) throws
+  // instead of letting a permissive parser silently zero an axis.
+  function validateTowgs84String(projStr){
+    var m = /\+towgs84=([^\s+]*)/.exec(projStr);
+    if(!m) return null; // definition carries no shift — nothing to validate
+    var raw = m[1].trim();
+    if(raw === '') throw new Error('datum shift string is empty');
+    var parts = raw.split(',');
+    if(parts.length !== 3 && parts.length !== 7){
+      throw new Error('datum shift string must contain 3 or 7 numbers, got ' + parts.length);
+    }
+    var nums = parts.map(function(s){
+      var t = s.trim();
+      if(!/^-?\d+(\.\d+)?$/.test(t)){
+        throw new Error('datum shift string contains a non-numeric component: "' + s + '"');
+      }
+      return parseFloat(t);
+    });
+    for(var i = 0; i < nums.length; i++){
+      if(!isFinite(nums[i])) throw new Error('datum shift string contains a non-finite component');
+    }
+    return nums;
+  }
+
+  // Coordinate inputs must be real numbers. Note Number('') === 0 in JavaScript,
+  // so empty/coerced values are refused here rather than silently transforming a
+  // bogus 0 axis into a plausible-looking result.
+  function requireFiniteNumber(v, label){
+    if(v === '' || v === null || v === undefined || typeof v === 'boolean'){
+      throw new Error(label + ' is missing (got ' + JSON.stringify(v) + ')');
+    }
+    var n = Number(v);
+    if(!isFinite(n)){
+      throw new Error(label + ' is not a valid number (got ' + JSON.stringify(v) + ')');
+    }
+    return n;
+  }
+
+  // Convert grid easting/northing to WGS84 lat/lon. `useNad27` selects the
+  // historical NAD27 path; the default WGS84 path never applies a shift.
+  function projectToLatLon(easting, northing, useNad27){
+    if(typeof proj4 !== 'function'){
+      throw new Error('coordinate converter is not loaded — check your connection and retry');
+    }
+    var e = requireFiniteNumber(easting, 'Easting');
+    var n = requireFiniteNumber(northing, 'Northing');
+    if(useNad27){
+      // Refuse to run with a possibly-partial shift: validate both the tuple
+      // and its serialized string form before handing them to proj4.
+      assertCompleteShift(NAD27_SHIFT);
+      validateTowgs84String(UTM_NAD27);
+    }
+    var lonlat = proj4(useNad27 ? UTM_NAD27 : UTM_WGS84, 'WGS84', [e, n]);
+    if(!isFinite(lonlat[0]) || !isFinite(lonlat[1])){
+      throw new Error('coordinate conversion produced an invalid result');
+    }
+    return lonlat;
+  }
+
+  // ── Datum toggle (manual override) ──
+  var datumToggleEl    = document.getElementById('datumToggle');
+  var datumToggleInput = document.getElementById('datumShiftToggle');
+  var datumToggleSub   = document.getElementById('datumToggleSub');
+  var lastResult = null; // { parsed, imgUrl } — lets the toggle re-run the conversion
+
+  function datumShiftOn(){
+    return !!(datumToggleInput && datumToggleInput.checked);
+  }
+
+  function updateDatumToggleUI(){
+    var on = datumShiftOn();
+    if(datumToggleEl) datumToggleEl.classList.toggle('on', on);
+    if(datumToggleSub){
+      datumToggleSub.textContent = on
+        ? 'On — applying historical NAD27 shift (+towgs84=-8,160,176) · Location 2'
+        : 'Off — assuming modern WGS84 grid (EPSG:32616) · Location 1';
+    }
+  }
+  if(datumToggleInput){
+    datumToggleInput.addEventListener('change', function(){
+      updateDatumToggleUI();
+      if(lastResult) renderResult(lastResult.parsed, lastResult.imgUrl);
+    });
+  }
+  updateDatumToggleUI();
 
   // ── Dropzone ──
   dropzone.addEventListener('click', function(){ fileInput.click(); });
@@ -1226,6 +1443,7 @@ input[type=file]{ display: none; }
 
   // ── Render: scanning ──
   function renderScanning(imgUrl){
+    lastResult = null;
     instructions.style.display = 'none';
     // On mobile: show sheet open + spinner prominently
     if(typeof setSheet === 'function' && isMobileSheet()){
@@ -1244,6 +1462,7 @@ input[type=file]{ display: none; }
 
   // ── Render: error ──
   function renderError(message){
+    lastResult = null;
     instructions.style.display = '';
     resultsArea.innerHTML =
       '<div class="result-divider"></div>' +
@@ -1254,29 +1473,14 @@ input[type=file]{ display: none; }
   }
 
   // ── Render: result ──
-  function handleParsedResult(parsed, imgUrl){
-    if(!parsed.found || parsed.easting==null || parsed.northing==null){
-      var msg = parsed.notes || 'No clear northing/easting labels were found on this plan.';
-      instructions.style.display = '';
-      resultsArea.innerHTML =
-        '<div class="result-divider"></div>' +
-        '<div class="result-label">Uploaded plan</div>' +
-        '<img class="result-thumb" src="'+imgUrl+'" alt="Survey plan">' +
-        '<div class="error-box"><strong>No coordinates found</strong>' + escapeHtml(msg) +
-          (parsed.raw_easting_label||parsed.raw_northing_label
-            ? '<br><br>Partial read — easting: ' + escapeHtml(parsed.raw_easting_label||'—') + ', northing: ' + escapeHtml(parsed.raw_northing_label||'—')
-            : '') +
-        '</div>' +
-        '<div class="actions">' +
-          '<button class="btn btn-secondary" onclick="document.getElementById(\'fileInput\').click()">Try another photo</button>' +
-        '</div>';
-      return;
-    }
-
-    var proj = '+proj=utm +zone=16 +ellps=clrk66 +towgs84=-8,160,176 +units=m +no_defs'; // NAD27 Central America → WGS84
+  function renderResult(parsed, imgUrl){
     var lonlat;
-    try{ lonlat = proj4(proj, 'WGS84', [parsed.easting, parsed.northing]); }
-    catch(e){ renderError('Found coordinates but could not convert them (' + e.message + ').'); return; }
+    try{
+      lonlat = projectToLatLon(parsed.easting, parsed.northing, datumShiftOn());
+    }catch(e){
+      renderError('Found coordinates but could not convert them (' + e.message + ').');
+      return null;
+    }
     var lon = lonlat[0], lat = lonlat[1];
 
     var inBelize = lat>15.5 && lat<18.7 && lon>-89.5 && lon<-87.0;
@@ -1305,8 +1509,11 @@ input[type=file]{ display: none; }
       (parsed.notes ? '<div class="result-notes">'+escapeHtml(parsed.notes)+'</div>' : '') +
 
       '<div class="result-label">Converted position</div>' +
+      '<div class="datum-note">' + (datumShiftOn()
+        ? 'Using <strong>NAD27 (Clarke 1866)</strong> with full +towgs84=-8,160,176 shift · Location 2'
+        : 'Using <strong>WGS84 (EPSG:32616)</strong> modern grid · Location 1') + '</div>' +
       (!inBelize
-        ? '<div class="out-of-bounds"><strong>Outside Belize</strong>The converted position falls outside Belize\'s borders, which usually means this plan isn\'t using the UTM Zone 16N grid this tool assumes — possibly the older colonial "Belize Grid" instead. Treat the numbers below with caution.</div>'
+        ? '<div class="out-of-bounds"><strong>Outside Belize</strong>The converted position falls outside Belize\'s borders, which usually means this plan isn\'t using the UTM Zone 16N grid this tool assumes. If it\'s an older survey, try the "Historical Survey Shift (NAD27)" toggle above — otherwise the plan may use the older colonial "Belize Grid" instead. Treat the numbers below with caution.</div>'
         : '') +
       '<div class="coord-row">' +
         '<div class="coord-box"><div class="cl">Latitude</div><div class="cv">'+lat.toFixed(6)+'</div></div>' +
@@ -1335,6 +1542,34 @@ input[type=file]{ display: none; }
         '</div>' +
       '</div>';
 
+    return { lat: lat, lon: lon, mapsUrl: mapsUrl, confidence: confidence };
+  }
+
+  // ── Handle the AI's parsed coordinates (first time only: count + log) ──
+  function handleParsedResult(parsed, imgUrl){
+    if(!parsed.found || parsed.easting==null || parsed.northing==null){
+      lastResult = null;
+      var msg = parsed.notes || 'No clear northing/easting labels were found on this plan.';
+      instructions.style.display = '';
+      resultsArea.innerHTML =
+        '<div class="result-divider"></div>' +
+        '<div class="result-label">Uploaded plan</div>' +
+        '<img class="result-thumb" src="'+imgUrl+'" alt="Survey plan">' +
+        '<div class="error-box"><strong>No coordinates found</strong>' + escapeHtml(msg) +
+          (parsed.raw_easting_label||parsed.raw_northing_label
+            ? '<br><br>Partial read — easting: ' + escapeHtml(parsed.raw_easting_label||'—') + ', northing: ' + escapeHtml(parsed.raw_northing_label||'—')
+            : '') +
+        '</div>' +
+        '<div class="actions">' +
+          '<button class="btn btn-secondary" onclick="document.getElementById(\'fileInput\').click()">Try another photo</button>' +
+        '</div>';
+      return;
+    }
+
+    lastResult = { parsed: parsed, imgUrl: imgUrl };
+    var out = renderResult(parsed, imgUrl);
+    if(!out) return; // conversion failed — error already rendered
+
     fileInput.value = '';
     incrementCount();
 
@@ -1347,10 +1582,11 @@ input[type=file]{ display: none; }
         action: 'insert',
         easting: parsed.easting,
         northing: parsed.northing,
-        latitude: lat,
-        longitude: lon,
-        maps_url: mapsUrl,
-        confidence: confidence,
+        latitude: out.lat,
+        longitude: out.lon,
+        maps_url: out.mapsUrl,
+        confidence: out.confidence,
+        datum_mode: datumShiftOn() ? 'nad27' : 'wgs84',
         user_agent: navigator.userAgent
       })
     }).then(function(r){ return r.json(); })
@@ -1377,6 +1613,9 @@ input[type=file]{ display: none; }
     resultsArea.innerHTML = '';
     instructions.style.display = '';
     fileInput.value = '';
+    lastResult = null;
+    if(datumToggleInput){ datumToggleInput.checked = false; }
+    updateDatumToggleUI();
     liveMap.classList.remove('visible');
     staticMap.classList.remove('hidden');
     mapOverlay.classList.remove('visible');
