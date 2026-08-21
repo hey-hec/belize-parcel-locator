@@ -186,9 +186,10 @@ html, body{
   width: 100%; height: 100%;
   border: none;
   opacity: 0;
+  pointer-events: none;
   transition: opacity 0.5s ease;
 }
-#liveMap.visible{ opacity: 1; }
+#liveMap.visible{ opacity: 1; pointer-events: auto; }
 
 /* ════════════════════════════════
    FLOATING PANEL
@@ -1122,9 +1123,7 @@ input[type=file]{ display: none; }
     <img src="map-bg.png" alt="Map of Belize and Central America" style="width:100%;height:100%;object-fit:cover;object-position:center;display:block;">
   </picture>
 
-  <iframe id="liveMap" allowfullscreen loading="lazy"
-    referrerpolicy="strict-origin-when-cross-origin"
-    title="Property location on Google Maps"></iframe>
+  <div id="liveMap" aria-label="Property location on Google Maps"></div>
 
   <div class="map-overlay-label" id="mapOverlayLabel">
     <div class="green-dot"></div>
@@ -1474,9 +1473,15 @@ input[type=file]{ display: none; }
 
   // ── Render: result ──
   function renderResult(parsed, imgUrl){
-    var lonlat;
+    // Compute BOTH interpretations up front: Location 1 (modern WGS84 grid)
+    // and Location 2 (historical NAD27 shift). Both markers live on the same
+    // map instance and the toggle just switches which one is visible — the map
+    // itself is never reloaded.
+    var loc1, loc2, lonlat;
     try{
-      lonlat = projectToLatLon(parsed.easting, parsed.northing, datumShiftOn());
+      loc1 = projectToLatLon(parsed.easting, parsed.northing, false);
+      loc2 = projectToLatLon(parsed.easting, parsed.northing, true);
+      lonlat = datumShiftOn() ? loc2 : loc1;
     }catch(e){
       renderError('Found coordinates but could not convert them (' + e.message + ').');
       return null;
@@ -1488,7 +1493,7 @@ input[type=file]{ display: none; }
     if(['high','medium','low'].indexOf(confidence)===-1) confidence='medium';
     var mapsUrl = 'https://www.google.com/maps?q='+lat.toFixed(6)+','+lon.toFixed(6)+'&t=k&z=17';
 
-    showLiveMap(lat, lon);
+    showLiveMap(loc1, loc2, datumShiftOn());
     // On mobile: collapse sheet so map is the focus
     if(typeof setSheet === 'function' && isMobileSheet()){
       setSheet(false, true);
@@ -1594,18 +1599,100 @@ input[type=file]{ display: none; }
       .catch(function(){});
   }
 
-  // ── Map swap ──
-  function showLiveMap(lat, lon){
-    liveMap.src = 'https://www.google.com/maps/embed/v1/place' +
-      '?key=AIzaSyAUFzAnBcqaGtzLWfjnPqV4ffGK7gruQWw' +
-      '&q='+lat.toFixed(6)+','+lon.toFixed(6)+
-      '&zoom=14&maptype=satellite';
-    liveMap.onload = function(){
-      staticMap.classList.add('hidden');
-      liveMap.classList.add('visible');
-      mapOverlayText.textContent = lat.toFixed(5) + ', ' + lon.toFixed(5);
-      mapOverlay.classList.add('visible');
-    };
+  // ── Live map (Google Maps JS API — one map instance, two markers) ──
+  var MAPS_API_KEY = 'AIzaSyAUFzAnBcqaGtzLWfjnPqV4ffGK7gruQWw';
+  var gmap = null;        // google.maps.Map instance
+  var markerWgs84 = null; // Location 1 — modern WGS84 grid
+  var markerNad27 = null; // Location 2 — historical NAD27 shift
+  var gmapsReady = false;
+  var gmapsLoading = false;
+  var pendingMap = null;  // { loc1: [lon,lat], loc2: [lon,lat], active: boolean }
+
+  function pinIcon(color){
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="30" height="44" viewBox="0 0 30 44">' +
+      '<path d="M15 0C6.7 0 0 6.7 0 15c0 11.2 15 29 15 29s15-17.8 15-29C30 6.7 23.3 0 15 0z" fill="' + color + '" stroke="#ffffff" stroke-width="2"/>' +
+      '<circle cx="15" cy="15" r="6" fill="#ffffff"/></svg>';
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  }
+
+  // Lazy-load the Maps JS API the first time a result needs it.
+  function ensureGmaps(){
+    if(gmapsReady || gmapsLoading) return;
+    if(typeof google !== 'undefined' && google.maps && google.maps.Map){ gmapsReady = true; return; }
+    gmapsLoading = true;
+    var s = document.createElement('script');
+    s.src = 'https://maps.googleapis.com/maps/api/js?key=' + MAPS_API_KEY + '&v=weekly&callback=__bllGmapsInit';
+    s.async = true;
+    s.defer = true;
+    s.onerror = function(){ gmapsLoading = false; mapLoadFailed(); };
+    document.head.appendChild(s);
+    // Fallback if the API never calls back (e.g. key lacks the JS API product)
+    setTimeout(function(){
+      if(!gmapsReady){
+        gmapsLoading = false;
+        mapLoadFailed();
+      }
+    }, 8000);
+  }
+
+  window.__bllGmapsInit = function(e){
+    if(e){ mapLoadFailed(); return; }
+    gmapsReady = true;
+    gmapsLoading = false;
+    if(pendingMap) applyMapUpdate();
+  };
+
+  function mapLoadFailed(){
+    mapOverlayText.textContent = 'Live map could not load — check your connection or that the API key has Maps JavaScript API enabled';
+    mapOverlay.classList.add('visible');
+  }
+
+  // Position both markers and show only the active location. Safe to call
+  // repeatedly (the toggle re-runs it) — the map instance is never recreated.
+  function showLiveMap(loc1, loc2, active){
+    pendingMap = { loc1: loc1, loc2: loc2, active: !!active };
+    if(gmapsReady && gmap) applyMapUpdate();
+    else ensureGmaps();
+  }
+
+  function applyMapUpdate(){
+    if(!pendingMap || typeof google === 'undefined' || !google.maps) return;
+    var p = pendingMap;
+    var pos1 = { lat: p.loc1[1], lng: p.loc1[0] };
+    var pos2 = { lat: p.loc2[1], lng: p.loc2[0] };
+    if(!gmap){
+      gmap = new google.maps.Map(liveMap, {
+        zoom: 14,
+        center: p.active ? pos2 : pos1,
+        mapTypeId: 'satellite',
+        fullscreenControl: true,
+        mapTypeControl: false,
+        streetViewControl: false
+      });
+      markerWgs84 = new google.maps.Marker({
+        map: gmap,
+        position: pos1,
+        icon: { url: pinIcon('#16a34a'), anchor: new google.maps.Point(15, 44) },
+        title: 'Location 1 — modern WGS84 grid'
+      });
+      markerNad27 = new google.maps.Marker({
+        map: gmap,
+        position: pos2,
+        icon: { url: pinIcon('#d97706'), anchor: new google.maps.Point(15, 44) },
+        title: 'Location 2 — historical NAD27 shift'
+      });
+    } else {
+      markerWgs84.setPosition(pos1);
+      markerNad27.setPosition(pos2);
+    }
+    markerWgs84.setVisible(!p.active);
+    markerNad27.setVisible(p.active);
+    gmap.panTo(p.active ? pos2 : pos1);
+    mapOverlayText.textContent = (p.active ? 'NAD27 · ' : 'WGS84 · ') + (p.active ? pos2.lat : pos1.lat).toFixed(5) + ', ' + (p.active ? pos2.lng : pos1.lng).toFixed(5);
+    mapOverlay.classList.add('visible');
+    staticMap.classList.add('hidden');
+    liveMap.classList.add('visible');
+    pendingMap = null;
   }
 
   // ── Reset ──
@@ -1619,7 +1706,9 @@ input[type=file]{ display: none; }
     liveMap.classList.remove('visible');
     staticMap.classList.remove('hidden');
     mapOverlay.classList.remove('visible');
-    liveMap.src = '';
+    pendingMap = null;
+    if(markerWgs84) markerWgs84.setVisible(false);
+    if(markerNad27) markerNad27.setVisible(false);
     // On mobile: collapse sheet, show FAB again
     if(typeof setSheet === 'function' && isMobileSheet()){
       setSheet(false, true);
